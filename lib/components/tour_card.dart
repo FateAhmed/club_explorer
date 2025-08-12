@@ -3,6 +3,7 @@ import 'package:club_explorer/models/tour.dart';
 import 'package:club_explorer/screens/home/web_widget/web_widget.dart';
 import 'package:club_explorer/screens/tour/tour_route.dart';
 import 'package:club_explorer/utils/AppColors.dart';
+import 'package:club_explorer/utils/AppDimens.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -43,10 +44,7 @@ class TourCard extends StatelessWidget {
                     margin: const EdgeInsets.all(8),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(16),
-                      child: Image.asset(
-                        'assets/images/tour-listing-1.png',
-                        fit: BoxFit.cover,
-                      ),
+                      child: Image.network(tour.routeMapImage, fit: BoxFit.cover),
                     ),
                   ),
                   // Duration badge
@@ -74,44 +72,43 @@ class TourCard extends StatelessWidget {
                     ),
                   ),
                   // Favorite button
-                  Positioned(
-                    top: 20,
-                    right: 20,
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.favorite_border,
-                        color: AppColors.primary1,
-                        size: 20,
-                      ),
-                    ),
-                  ),
+                  // Positioned(
+                  //   top: 20,
+                  //   right: 20,
+                  //   child: Container(
+                  //     padding: const EdgeInsets.all(8),
+                  //     decoration: const BoxDecoration(
+                  //       color: Colors.white,
+                  //       shape: BoxShape.circle,
+                  //     ),
+                  //     child: const Icon(
+                  //       Icons.favorite_border,
+                  //       color: AppColors.primary1,
+                  //       size: 20,
+                  //     ),
+                  //   ),
+                  // ),
                 ],
               ),
 
               // Info section
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    // Title
                     Text(
                       tour.title,
                       style: const TextStyle(
                         fontWeight: FontWeight.w600,
-                        fontSize: 18,
+                        fontSize: 16,
                         color: AppColors.textprimary,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
-
                     // Location
                     // Row(
                     //   children: [
@@ -142,13 +139,13 @@ class TourCard extends StatelessWidget {
                             Icon(
                               Icons.calendar_today_outlined,
                               color: AppColors.grey,
-                              size: 16,
+                              size: 14,
                             ),
                             const SizedBox(width: 4),
                             Text(
                               '${tour.itinerary.length} days',
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: 12,
                                 color: AppColors.grey,
                                 fontWeight: FontWeight.w400,
                               ),
@@ -239,6 +236,7 @@ class TourCard extends StatelessWidget {
                               ));
                         },
                       ),
+                      AppDimens.sizebox10,
                     ],
                   ],
                 ),

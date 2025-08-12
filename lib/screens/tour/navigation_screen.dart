@@ -37,8 +37,6 @@ class _NavigationScreenState extends State<NavigationScreen> with TickerProvider
   double distanceToDestination = 0.0;
   String currentInstruction = '';
   bool isArrived = false;
-  late AnimationController _pulseController;
-  late Animation<double> _pulseAnimation;
 
   static const String apiKey = 'AIzaSyBLTm_mUtLfjWxUZD5YB4_BNoYXz-AUw5U';
 
@@ -234,28 +232,12 @@ class _NavigationScreenState extends State<NavigationScreen> with TickerProvider
   void initState() {
     super.initState();
     currentDestinationIndex = widget.startIndex;
-
-    // Initialize pulse animation
-    _pulseController = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
-    );
-    _pulseAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.2,
-    ).animate(CurvedAnimation(
-      parent: _pulseController,
-      curve: Curves.easeInOut,
-    ));
-    _pulseController.repeat(reverse: true);
-
     _initializeNavigation();
   }
 
   @override
   void dispose() {
     locationTimer?.cancel();
-    _pulseController.dispose();
     super.dispose();
   }
 

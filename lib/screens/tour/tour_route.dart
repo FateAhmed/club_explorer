@@ -19,15 +19,16 @@ class TourRouteScreen extends StatefulWidget {
   final List<LatLng> routePoints;
   final List<String> pointNames;
   final String tourId;
-  const TourRouteScreen(
-      {super.key,
-      required this.tourId,
-      required this.tourName,
-      required this.tourDuration,
-      required this.tourDistance,
-      required this.tourDescription,
-      required this.routePoints,
-      required this.pointNames});
+  const TourRouteScreen({
+    super.key,
+    required this.tourId,
+    required this.tourName,
+    required this.tourDuration,
+    required this.tourDistance,
+    required this.tourDescription,
+    required this.routePoints,
+    required this.pointNames,
+  });
 
   @override
   State<TourRouteScreen> createState() => _TourRouteScreenState();
@@ -739,7 +740,7 @@ class _TourRouteScreenState extends State<TourRouteScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Tour Route',
+          widget.tourName,
           style: TextStyle(
             color: AppColors.textprimary,
             fontWeight: FontWeight.bold,
@@ -751,45 +752,32 @@ class _TourRouteScreenState extends State<TourRouteScreen> {
         children: [
           // Tour Details Section
           Container(
-            padding: AppDimens.padding20,
+            padding: EdgeInsets.symmetric(horizontal: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  widget.tourName,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textprimary,
-                  ),
-                ),
-                AppDimens.sizebox10,
+                AppDimens.sizebox15,
                 Row(
                   children: [
                     Icon(Icons.access_time, color: AppColors.primary1, size: 16),
                     AppDimens.sizebox5,
                     Text(
                       widget.tourDuration,
-                      style: TextStyle(
-                        color: AppColors.grey,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: AppColors.grey, fontSize: 14),
                     ),
-                    AppDimens.sizebox20,
+                    AppDimens.sizebox10,
                     Icon(Icons.straighten, color: AppColors.primary1, size: 16),
-                    AppDimens.sizebox5,
+                    AppDimens.sizebox2,
                     Text(
                       widget.tourDistance,
-                      style: TextStyle(
-                        color: AppColors.grey,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: AppColors.grey, fontSize: 14),
                     ),
                   ],
                 ),
                 AppDimens.sizebox10,
                 Text(
                   widget.tourDescription,
+                  maxLines: 3,
                   style: TextStyle(
                     color: AppColors.textsecondary,
                     fontSize: 14,
@@ -817,160 +805,41 @@ class _TourRouteScreenState extends State<TourRouteScreen> {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(15),
-                child: Stack(
-                  children: [
-                    GoogleMap(
-                      onMapCreated: (GoogleMapController controller) {
-                        mapController = controller;
-                        // Apply dark map style
-                        controller.setMapStyle(_mapStyle);
-                      },
-                      onCameraMove: (CameraPosition position) {
-                        // Update zoom level and markers
-                        if (position.zoom != currentZoom) {
-                          setState(() {
-                            currentZoom = position.zoom;
-                          });
-                          _updateMarkers();
-                        }
-                      },
-                      initialCameraPosition: CameraPosition(
-                        target: widget.routePoints.isNotEmpty
-                            ? widget.routePoints.first
-                            : const LatLng(36.1699, -115.1398),
-                        zoom: 12,
-                      ),
-                      markers: markers,
-                      polylines: polylines,
-                      myLocationEnabled: isLocationEnabled,
-                      myLocationButtonEnabled: isLocationEnabled,
-                      zoomControlsEnabled: false,
-                      mapToolbarEnabled: false,
-                      mapType: MapType.normal,
-                    ),
-                    if (isLoadingRoute)
-                      Positioned(
-                        top: 10,
-                        right: 10,
-                        child: Container(
-                          padding: AppDimens.padding10,
-                          decoration: BoxDecoration(
-                            color: AppColors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.grey.withOpacity(0.3),
-                                blurRadius: 5,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: AppColors.primary1,
-                                ),
-                              ),
-                              AppDimens.sizebox10,
-                              Text(
-                                'Loading route...',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textprimary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                    // Navigation Controls
-                    Positioned(
-                      bottom: 20,
-                      right: 20,
-                      child: Column(
-                        children: [
-                          // Navigation Button
-                          Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.grey.withOpacity(0.3),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(12),
-                                onTap: _startNavigation,
-                                child: Container(
-                                  padding: AppDimens.padding15,
-                                  child: Icon(
-                                    Icons.navigation,
-                                    color: AppColors.primary1,
-                                    size: 24,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          AppDimens.sizebox10,
-                          // Location Status
-                          if (isLocationEnabled)
-                            Container(
-                              padding: AppDimens.padding10,
-                              decoration: BoxDecoration(
-                                color: AppColors.white,
-                                borderRadius: BorderRadius.circular(8),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.grey.withOpacity(0.3),
-                                    blurRadius: 5,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.location_on,
-                                    color: AppColors.primary1,
-                                    size: 16,
-                                  ),
-                                  AppDimens.sizebox5,
-                                  Text(
-                                    'Location Active',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.textprimary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
+                child: GoogleMap(
+                  onMapCreated: (GoogleMapController controller) {
+                    mapController = controller;
+                    // Apply dark map style
+                    controller.setMapStyle(_mapStyle);
+                  },
+                  onCameraMove: (CameraPosition position) {
+                    // Update zoom level and markers
+                    if (position.zoom != currentZoom) {
+                      setState(() {
+                        currentZoom = position.zoom;
+                      });
+                      _updateMarkers();
+                    }
+                  },
+                  initialCameraPosition: CameraPosition(
+                    target: widget.routePoints.isNotEmpty
+                        ? widget.routePoints.first
+                        : const LatLng(36.1699, -115.1398),
+                    zoom: 12,
+                  ),
+                  markers: markers,
+                  polylines: polylines,
+                  myLocationEnabled: isLocationEnabled,
+                  myLocationButtonEnabled: isLocationEnabled,
+                  zoomControlsEnabled: false,
+                  mapToolbarEnabled: false,
+                  mapType: MapType.normal,
                 ),
               ),
             ),
           ),
-
-          // Tour Points List
+          AppDimens.sizebox5,
           Container(
-            padding: AppDimens.padding20,
+            padding: EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
               color: AppColors.white,
               borderRadius: const BorderRadius.only(
@@ -997,19 +866,15 @@ class _TourRouteScreenState extends State<TourRouteScreen> {
                   ),
                 ),
                 AppDimens.sizebox15,
-                Container(
+                SizedBox(
                   height: 150,
                   child: ListView.builder(
                     itemCount: widget.routePoints.length,
                     itemBuilder: (context, index) {
                       return GestureDetector(
                         onTap: () {
-                          // Pan to the selected point
                           mapController?.animateCamera(
-                            CameraUpdate.newLatLngZoom(
-                              widget.routePoints[index],
-                              15, // Zoom level when panning to a point
-                            ),
+                            CameraUpdate.newLatLngZoom(widget.routePoints[index], 15),
                           );
 
                           // Show a brief highlight
@@ -1086,7 +951,7 @@ class _TourRouteScreenState extends State<TourRouteScreen> {
                     },
                   ),
                 ),
-                AppDimens.sizebox20,
+                AppDimens.sizebox10,
                 // Navigation and Booking Buttons
                 Row(
                   children: [
@@ -1097,12 +962,14 @@ class _TourRouteScreenState extends State<TourRouteScreen> {
                           Icons.navigation,
                           color: AppColors.white,
                         ),
-                        label: Text(
-                          'Start Navigation',
-                          style: TextStyle(
-                            color: AppColors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                        label: FittedBox(
+                          child: Text(
+                            'Start Navigation',
+                            style: TextStyle(
+                              color: AppColors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
@@ -1146,7 +1013,7 @@ class _TourRouteScreenState extends State<TourRouteScreen> {
               ],
             ),
           ),
-          AppDimens.sizebox10,
+          AppDimens.sizebox30,
         ],
       ),
     );

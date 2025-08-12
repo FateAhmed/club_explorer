@@ -1,4 +1,3 @@
-import 'package:club_explorer/components/outlined_button.dart';
 import 'package:club_explorer/components/search_field.dart';
 import 'package:club_explorer/components/theme_button.dart';
 import 'package:club_explorer/screens/chat/chat.dart';
@@ -53,165 +52,99 @@ class _MessagesScreenState extends State<MessagesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text('Message'),
+        centerTitle: true,
+        backgroundColor: AppColors.grey50,
+      ),
       backgroundColor: AppColors.grey50,
       body: SafeArea(
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  AppDimens.sizebox20,
-                  Center(
-                    child: Text(
-                      'Message',
-                      style:
-                          TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  AppDimens.sizebox20,
-                  SearchField(
-                    text: 'Search...',
-                    onpress: () {},
-                    preicon: Image.asset(
-                      'assets/icons/search.png',
-                      height: 30,
-                      width: 30,
-                    ),
-                    posticon: Image.asset(
-                      'assets/icons/filter.png',
-                      height: 30,
-                      width: 30,
-                    ),
-                  ),
-                  AppDimens.sizebox30,
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ThemeButton(
-                          width: 80,
-                          hights: 40,
-                          textColor: isGroup == true
-                              ? AppColors.white
-                              : AppColors.grey400,
-                          bold: false,
-                          color: isGroup == true
-                              ? AppColors.primary1
-                              : AppColors.white,
-                          text: 'Group',
-                          onpress: () {
-                            setState(() {
-                              isGroup = true;
-                            });
-                          }),
-                      AppDimens.sizebox20,
-                      ThemeButton(
-                          width: 110,
-                          hights: 40,
-                          bold: false,
-                          textColor: isGroup == false
-                              ? AppColors.white
-                              : AppColors.grey400,
-                          color: isGroup == false
-                              ? AppColors.primary1
-                              : AppColors.white,
-                          text: 'Individual',
-                          onpress: () {
-                            setState(() {
-                              isGroup = false;
-                            });
-                          }),
-                    ],
-                  ),
-                  Expanded(
-                    child: ListView.separated(
-                      padding: const EdgeInsets.only(top: 10, bottom: 10),
-                      itemCount: messages.length,
-                      separatorBuilder: (context, index) => const Divider(
-                        thickness: 0.5,
-                      ),
-                      itemBuilder: (context, index) {
-                        final msg = messages[index];
-                        return ListTile(
-                          onTap: () {
-                            Get.to(() => InChat(
-                                  name: msg["name"],
-                                ));
-                          },
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 0), // remove internal padding
-                          leading: CircleAvatar(
-                            radius: 24,
-                            backgroundImage: AssetImage(msg["avatar"]),
-                          ),
-                          title: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  msg["name"],
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              Text(
-                                msg["time"],
-                                style: const TextStyle(
-                                    fontSize: 12, color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                          subtitle: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  msg["message"],
-                                  style: const TextStyle(
-                                      color: Colors.grey, fontSize: 13),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              if (msg["unreadCount"] != null)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  margin: const EdgeInsets.only(left: 8),
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.notification,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Text(
-                                    "${msg["unreadCount"]}",
-                                    style: const TextStyle(
-                                        color: Colors.white, fontSize: 12),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            children: [
+              AppDimens.sizebox10,
+              SearchField(
+                text: 'Search...',
+                onpress: () {},
+                preicon: Image.asset(
+                  'assets/icons/search.png',
+                  height: 30,
+                  width: 30,
+                ),
+                posticon: Image.asset(
+                  'assets/icons/filter.png',
+                  height: 30,
+                  width: 30,
+                ),
               ),
-            ),
-            Positioned(
-              top: 12,
-              left: 12,
-              child: IconButton(
-                  onPressed: () {
-                    Get.back();
+              AppDimens.sizebox10,
+              Expanded(
+                child: ListView.separated(
+                  padding: const EdgeInsets.only(top: 10, bottom: 10),
+                  itemCount: messages.length,
+                  separatorBuilder: (context, index) => const Divider(
+                    thickness: 0.5,
+                  ),
+                  itemBuilder: (context, index) {
+                    final msg = messages[index];
+                    return ListTile(
+                      onTap: () {
+                        Get.to(() => InChat(
+                              name: msg["name"],
+                            ));
+                      },
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 0), // remove internal padding
+                      leading: CircleAvatar(
+                        radius: 24,
+                        backgroundImage: AssetImage(msg["avatar"]),
+                      ),
+                      title: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              msg["name"],
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Text(
+                            msg["time"],
+                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                      subtitle: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              msg["message"],
+                              style: const TextStyle(color: Colors.grey, fontSize: 13),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (msg["unreadCount"] != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              margin: const EdgeInsets.only(left: 8),
+                              decoration: const BoxDecoration(
+                                color: AppColors.notification,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Text(
+                                "${msg["unreadCount"]}",
+                                style: const TextStyle(color: Colors.white, fontSize: 12),
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
                   },
-                  icon: Image.asset(
-                    'assets/icons/arrow_back.png',
-                    height: 30,
-                    width: 30,
-                  )),
-            )
-          ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(

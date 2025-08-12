@@ -15,7 +15,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white.withOpacity(0.1),
+      appBar: AppBar(
+        backgroundColor: AppColors.white,
+        elevation: 0,
+        title: Text('Profile'),
+        centerTitle: true,
+      ),
+      backgroundColor: AppColors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -23,33 +29,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AppDimens.sizebox20,
-                // Header with back button and title
-                Row(
-                  children: [
-                    IconButton(
-                      padding: EdgeInsets.zero,
-                      onPressed: () => Get.back(),
-                      icon: Image.asset(
-                        'assets/icons/arrow_back.png',
-                        height: 28,
-                        width: 28,
-                      ),
-                    ),
-                    AppDimens.sizebox15,
-                    Text(
-                      'Profile',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textprimary,
-                      ),
-                    ),
-                  ],
-                ),
-                AppDimens.sizebox30,
-
-                // Profile Header Section
                 Container(
                   padding: AppDimens.padding20,
                   decoration: BoxDecoration(
@@ -66,14 +45,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   child: Column(
                     children: [
-                      // Profile Picture
                       CircleAvatar(
                         radius: 50,
                         backgroundImage: AssetImage('assets/icons/sample-user.png'),
                       ),
                       AppDimens.sizebox20,
-
-                      // User Name
                       Text(
                         'Matr Kohler',
                         style: TextStyle(
@@ -83,8 +59,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       AppDimens.sizebox5,
-
-                      // User Email
                       Text(
                         'matr.kohler@example.com',
                         style: TextStyle(
@@ -93,8 +67,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       AppDimens.sizebox20,
-
-                      // Edit Profile Button
                       ThemeButton(
                         text: 'Edit Profile',
                         onpress: () {
@@ -109,8 +81,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 AppDimens.sizebox30,
-
-                // Settings Section
                 Text(
                   'Settings',
                   style: TextStyle(
@@ -120,8 +90,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 AppDimens.sizebox15,
-
-                // Settings Options
                 Container(
                   decoration: BoxDecoration(
                     color: AppColors.white,
@@ -167,8 +135,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 AppDimens.sizebox30,
-
-                // Account Section
                 Text(
                   'Account',
                   style: TextStyle(
@@ -178,8 +144,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 AppDimens.sizebox15,
-
-                // Account Options
                 Container(
                   decoration: BoxDecoration(
                     color: AppColors.white,
@@ -224,9 +188,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                 ),
-                AppDimens.sizebox40,
-
-                // Logout Button
+                AppDimens.sizebox30,
                 ThemeButton(
                   text: 'Logout',
                   onpress: () {
@@ -238,7 +200,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   fontsize: 16,
                   bold: true,
                 ),
-                AppDimens.sizebox20,
+                AppDimens.sizebox10,
               ],
             ),
           ),

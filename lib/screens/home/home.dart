@@ -1,12 +1,10 @@
 import 'package:club_explorer/components/search_field.dart';
 import 'package:club_explorer/components/tour_card.dart';
 import 'package:club_explorer/screens/home/home_controller.dart';
-import 'package:club_explorer/screens/tour/tour_route.dart';
 import 'package:club_explorer/utils/AppColors.dart';
 import 'package:club_explorer/utils/AppDimens.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -92,7 +90,7 @@ class _HomePageState extends State<HomePage> {
                     width: 30,
                   ),
                 ),
-                AppDimens.sizebox30,
+                AppDimens.sizebox15,
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -101,41 +99,37 @@ class _HomePageState extends State<HomePage> {
                       style:
                           TextStyle(color: AppColors.textprimary, fontSize: 24, fontWeight: FontWeight.bold),
                     ),
-                    Text(
-                      'See All',
-                      style: TextStyle(
-                        color: AppColors.primary1,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    )
+                    // Text(
+                    //   'See All',
+                    //   style: TextStyle(
+                    //     color: AppColors.primary1,
+                    //     fontSize: 20,
+                    //     fontWeight: FontWeight.w500,
+                    //   ),
+                    // )
                   ],
                 ),
-                AppDimens.sizebox10,
-                Obx(() => homeController.isLoading.value
-                    ? SizedBox(
-                        height: 350,
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.primary1,
+                AppDimens.sizebox2,
+                Obx(
+                  () => homeController.isLoading.value
+                      ? SizedBox(
+                          height: 350,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.primary1,
+                            ),
+                          ),
+                        )
+                      : SizedBox(
+                          width: double.infinity,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: homeController.allTours.map((tour) => TourCard(tour: tour)).toList(),
                           ),
                         ),
-                      )
-                    : SizedBox(
-                        height: 400,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: homeController.allTours.length,
-                          padding: const EdgeInsets.fromLTRB(0, 0, 16, 0),
-                          itemBuilder: (context, index) {
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 12),
-                              child: TourCard(tour: homeController.allTours[index]),
-                            );
-                          },
-                        ),
-                      )),
-                AppDimens.sizebox30,
+                ),
+                AppDimens.sizebox5,
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -146,35 +140,18 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
-                AppDimens.sizebox10,
-                Obx(() => homeController.isLoading.value
-                    ? SizedBox(
-                        height: 350,
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.primary1,
-                          ),
-                        ),
-                      )
-                    : !homeController.isLoading.value && homeController.bookedTours.isEmpty
-                        ? SizedBox(height: 100, child: Center(child: Text('No bookings found')))
-                        : SizedBox(
-                            height: 300,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: homeController.bookedTours.length,
-                              padding: const EdgeInsets.fromLTRB(0, 0, 16, 0),
-                              itemBuilder: (context, index) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 12),
-                                  child: TourCard(
-                                    tour: homeController.bookedTours[index],
-                                    isBooked: true,
-                                  ),
-                                );
-                              },
+                AppDimens.sizebox20,
+                Obx(
+                  () => homeController.isLoading.value
+                      ? Center(child: CircularProgressIndicator(color: AppColors.primary1))
+                      : !homeController.isLoading.value && homeController.bookedTours.isEmpty
+                          ? SizedBox(height: 40, child: Center(child: Text('No bookings found')))
+                          : Column(
+                              children: homeController.bookedTours
+                                  .map((tour) => TourCard(tour: tour, isBooked: true))
+                                  .toList(),
                             ),
-                          )),
+                ),
                 AppDimens.sizebox20,
               ],
             ),

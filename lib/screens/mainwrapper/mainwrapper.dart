@@ -12,65 +12,58 @@ class MainWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.grey100,
-      resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        child: PageView(
-          controller: _mainWrapperController.pageController,
-          physics: const NeverScrollableScrollPhysics(),
-          onPageChanged: _mainWrapperController.animateToTab,
-          children: [..._mainWrapperController.pages],
-        ),
+      // resizeToAvoidBottomInset: true,
+      body: PageView(
+        controller: _mainWrapperController.pageController,
+        physics: const NeverScrollableScrollPhysics(),
+        onPageChanged: _mainWrapperController.animateToTab,
+        children: [..._mainWrapperController.pages],
       ),
       bottomNavigationBar: BottomAppBar(
+        padding: EdgeInsets.zero,
         elevation: 0,
         color: Colors.white,
-        child: SizedBox(
-          height: 70,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Obx(
-              () => Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _bottomAppBarItem(
-                    icon: 'assets/icons/home_b.png',
-                    page: 0,
-                    context,
-                    label: "Home",
-                  ),
-                  // _bottomAppBarItem(
-                  //   icon: 'assets/icons/bike_b.png',
-                  //   page: 1,
-                  //   context,
-                  //   label: "Rental",
-                  // ),
-                  // _bottomAppBarItem(
-                  //   icon: 'assets/icons/map_b.png',
-                  //   page: 2,
-                  //   context,
-                  //   label: "Tours",
-                  // ),
-                  // _bottomAppBarItem(
-                  //   icon: 'assets/icons/bed_b.png',
-                  //   page: 3,
-                  //   context,
-                  //   label: "Hotels",
-                  // ),
-                  _bottomAppBarItem(
-                    icon: 'assets/icons/chat_b.png',
-                    page: 1,
-                    context,
-                    label: "Message",
-                  ),
-                  _bottomAppBarItem(
-                    icon: 'assets/icons/user.png',
-                    page: 2,
-                    context,
-                    label: "Profile",
-                  ),
-                ],
+        child: Obx(
+          () => Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _bottomAppBarItem(
+                icon: 'assets/icons/home_b.png',
+                page: 0,
+                context,
+                label: "Home",
               ),
-            ),
+              // _bottomAppBarItem(
+              //   icon: 'assets/icons/bike_b.png',
+              //   page: 1,
+              //   context,
+              //   label: "Rental",
+              // ),
+              // _bottomAppBarItem(
+              //   icon: 'assets/icons/map_b.png',
+              //   page: 2,
+              //   context,
+              //   label: "Tours",
+              // ),
+              // _bottomAppBarItem(
+              //   icon: 'assets/icons/bed_b.png',
+              //   page: 3,
+              //   context,
+              //   label: "Hotels",
+              // ),
+              _bottomAppBarItem(
+                icon: 'assets/icons/chat_b.png',
+                page: 1,
+                context,
+                label: "Message",
+              ),
+              _bottomAppBarItem(
+                icon: 'assets/icons/user.png',
+                page: 2,
+                context,
+                label: "Profile",
+              ),
+            ],
           ),
         ),
       ),
@@ -94,9 +87,10 @@ class MainWrapper extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                  color: _mainWrapperController.currentPage == page ? AppColors.primary1 : Colors.grey,
-                  fontSize: 13,
-                  fontWeight: _mainWrapperController.currentPage == page ? FontWeight.w600 : null),
+                color: _mainWrapperController.currentPage == page ? AppColors.primary1 : Colors.grey,
+                fontSize: 13,
+                fontWeight: _mainWrapperController.currentPage == page ? FontWeight.w600 : null,
+              ),
             ),
           ],
         ),
