@@ -1,6 +1,7 @@
 import 'dart:convert';
 
-import 'package:club_explorer/models/tour.dart';
+import 'package:explorify/config/api_config.dart';
+import 'package:explorify/models/tour.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -20,7 +21,7 @@ class HomeController extends GetxController {
   getTours() async {
     isLoading.value = true;
     try {
-      var request = http.Request('GET', Uri.parse('https://club-explorer.ahmadt.com/api/tours'));
+      var request = http.Request('GET', Uri.parse('${ApiConfig.tourBaseUrl}'));
       http.StreamedResponse response = await request.send();
       debugPrint('Response: ${response.statusCode}');
       if (response.statusCode == 200) {
