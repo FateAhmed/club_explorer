@@ -1,10 +1,14 @@
-import 'package:club_explorer/components/search_field.dart';
-import 'package:club_explorer/components/tour_card.dart';
-import 'package:club_explorer/screens/home/home_controller.dart';
-import 'package:club_explorer/utils/AppColors.dart';
-import 'package:club_explorer/utils/AppDimens.dart';
+import 'dart:io';
+import 'package:explorify/components/search_field.dart';
+import 'package:explorify/components/tour_card.dart';
+import 'package:explorify/controllers/auth_controller.dart';
+import 'package:explorify/screens/home/home_controller.dart';
+import 'package:explorify/screens/mainwrapper/main_wrapper_controller.dart';
+import 'package:explorify/utils/AppColors.dart';
+import 'package:explorify/utils/AppDimens.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter/cupertino.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -15,6 +19,47 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final HomeController homeController = Get.put(HomeController());
+  final AuthController authController = Get.find<AuthController>();
+
+  String _getInitials() {
+    final name = authController.userName;
+    if (name.isEmpty) return 'U';
+    final parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return name[0].toUpperCase();
+  }
+
+  void _goToProfile() {
+    final mainWrapperController = Get.find<MainWrapperController>();
+    mainWrapperController.goToTab(2); // Profile is at index 2
+  }
+
+  Widget _buildAvatar() {
+    final imagePath = authController.userProfileImage;
+    final hasImage = imagePath.isNotEmpty && File(imagePath).existsSync();
+
+    if (hasImage) {
+      return CircleAvatar(
+        radius: 20,
+        backgroundImage: FileImage(File(imagePath)),
+      );
+    }
+
+    return CircleAvatar(
+      radius: 20,
+      backgroundColor: AppColors.primary1,
+      child: Text(
+        _getInitials(),
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,64 +75,62 @@ class _HomePageState extends State<HomePage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 28,
-                          backgroundImage: AssetImage('assets/icons/sample-user.png'),
-                        ),
-                        SizedBox(width: 12),
-                        Text(
-                          'Matr Kohler',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textprimary,
-                          ),
-                        ),
-                      ],
+                    GestureDetector(
+                      onTap: _goToProfile,
+                      child: Row(
+                        children: [
+                          Obx(() => _buildAvatar()),
+                          AppDimens.sizebox10,
+                          Obx(() => Text(
+                                authController.userName.isNotEmpty
+                                    ? authController.userName
+                                    : 'User',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textprimary,
+                                ),
+                              )),
+                        ],
+                      ),
                     ),
                     Row(
                       children: [
                         Container(
-                          height: 60,
-                          width: 60,
                           decoration: BoxDecoration(
                             border: Border.all(color: AppColors.grey400),
                             shape: BoxShape.circle,
                           ),
+                          padding: EdgeInsets.all(5),
                           child: Center(
-                            child: Image.asset(
-                              'assets/icons/notification.png',
-                              height: 28,
-                              width: 28,
-                              fit: BoxFit.contain,
+                            child: Icon(
+                              CupertinoIcons.bell,
+                              color: AppColors.grey,
                             ),
                           ),
                         ),
                         AppDimens.sizebox15,
                         Icon(
-                          Icons.menu,
-                          size: 30,
+                          CupertinoIcons.list_bullet,
+                          color: AppColors.grey,
+                          size: 25,
                         ),
                       ],
                     ),
                   ],
                 ),
-                AppDimens.sizebox20,
+                AppDimens.sizebox15,
                 SearchField(
                   color: AppColors.white.withOpacity(0.1),
-                  text: 'Search tours, destinations...',
+                  text: 'Search tours',
                   onpress: () {},
-                  preicon: Image.asset(
-                    'assets/icons/search.png',
-                    height: 30,
-                    width: 30,
+                  preicon: Icon(
+                    CupertinoIcons.search,
+                    color: AppColors.grey,
                   ),
-                  posticon: Image.asset(
-                    'assets/icons/filter.png',
-                    height: 30,
-                    width: 30,
+                  posticon: Icon(
+                    CupertinoIcons.slider_horizontal_3,
+                    color: AppColors.grey,
                   ),
                 ),
                 AppDimens.sizebox15,
@@ -96,20 +139,14 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     Text(
                       'All Tours',
-                      style:
-                          TextStyle(color: AppColors.textprimary, fontSize: 24, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: AppColors.textprimary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                    // Text(
-                    //   'See All',
-                    //   style: TextStyle(
-                    //     color: AppColors.primary1,
-                    //     fontSize: 20,
-                    //     fontWeight: FontWeight.w500,
-                    //   ),
-                    // )
                   ],
                 ),
-                AppDimens.sizebox2,
                 Obx(
                   () => homeController.isLoading.value
                       ? SizedBox(
@@ -120,14 +157,44 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ),
                         )
-                      : SizedBox(
-                          width: double.infinity,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: homeController.allTours.map((tour) => TourCard(tour: tour)).toList(),
-                          ),
-                        ),
+                      : homeController.allTours.isEmpty
+                          ? SizedBox(
+                              height: 200,
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      CupertinoIcons.map,
+                                      size: 48,
+                                      color: AppColors.grey,
+                                    ),
+                                    AppDimens.sizebox10,
+                                    Text(
+                                      'No tours available',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: AppColors.grey,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : SizedBox(
+                              width: double.infinity,
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    ...homeController.allTours.map((tour) => TourCard(tour: tour)).toList(),
+                                  ],
+                                ),
+                              ),
+                            ),
                 ),
                 AppDimens.sizebox5,
                 Row(
@@ -136,7 +203,7 @@ class _HomePageState extends State<HomePage> {
                     Text(
                       'Your Tour Bookings',
                       style:
-                          TextStyle(color: AppColors.textprimary, fontSize: 24, fontWeight: FontWeight.bold),
+                          TextStyle(color: AppColors.textprimary, fontSize: 20, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -144,8 +211,31 @@ class _HomePageState extends State<HomePage> {
                 Obx(
                   () => homeController.isLoading.value
                       ? Center(child: CircularProgressIndicator(color: AppColors.primary1))
-                      : !homeController.isLoading.value && homeController.bookedTours.isEmpty
-                          ? SizedBox(height: 40, child: Center(child: Text('No bookings found')))
+                      : homeController.bookedTours.isEmpty
+                          ? SizedBox(
+                              height: 200,
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      CupertinoIcons.ticket,
+                                      size: 48,
+                                      color: AppColors.grey,
+                                    ),
+                                    AppDimens.sizebox10,
+                                    Text(
+                                      'No bookings found',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: AppColors.grey,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
                           : Column(
                               children: homeController.bookedTours
                                   .map((tour) => TourCard(tour: tour, isBooked: true))
