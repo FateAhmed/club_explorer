@@ -1,13 +1,14 @@
-import 'package:club_explorer/components/theme_button.dart';
-import 'package:club_explorer/utils/Loader.dart';
-import 'package:club_explorer/screens/mainwrapper/mainwrapper.dart';
-import 'package:club_explorer/screens/auth/forget_pass.dart';
-import 'package:club_explorer/screens/auth/signup.dart';
+import 'package:explorify/components/theme_button.dart';
+import 'package:explorify/utils/Loader.dart';
+import 'package:explorify/screens/mainwrapper/mainwrapper.dart';
+import 'package:explorify/screens/auth/forget_pass.dart';
+import 'package:explorify/screens/auth/signup.dart';
 import 'package:get/get.dart';
-import 'package:club_explorer/components/theme_field.dart';
-import 'package:club_explorer/utils/AppColors.dart';
-import 'package:club_explorer/utils/AppDimens.dart';
-import 'package:club_explorer/utils/Validations.dart';
+import 'package:explorify/components/theme_field.dart';
+import 'package:explorify/utils/AppColors.dart';
+import 'package:explorify/utils/AppDimens.dart';
+import 'package:explorify/utils/Validations.dart';
+import 'package:explorify/controllers/auth_controller.dart';
 import 'package:flutter/material.dart';
 
 class Login extends StatefulWidget {
@@ -23,6 +24,21 @@ class _LoginState extends State<Login> {
   final formKey = GlobalKey<FormState>();
   bool isChecked = false;
   bool isObsecure = true;
+  final AuthController authController = Get.find<AuthController>();
+
+  @override
+  void initState() {
+    super.initState();
+    // Clear any previous error messages
+    authController.clearError();
+  }
+
+  @override
+  void dispose() {
+    cEmailController.dispose();
+    cPassController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +65,7 @@ class _LoginState extends State<Login> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    AppDimens.sizebox10,
                     Center(
                       child: Text(
                         "Lets Sign you in",
@@ -139,20 +156,34 @@ class _LoginState extends State<Login> {
                         ),
                       ],
                     ),
-                    ThemeButton(
-                      text: 'Sign In',
-                      onpress: () async {
-                        if (formKey.currentState!.validate()) {
-                          LoadingDialog.show(context);
-                          Future.delayed(const Duration(seconds: 2), () {
-                            if (context.mounted) {
-                              Navigator.pop(context);
-                              Get.offAll(() => MainWrapper());
+                    Obx(() => ThemeButton(
+                          text: authController.isLoading.value ? 'Signing In...' : 'Sign In',
+                          onpress: () async {
+                            if (formKey.currentState!.validate()) {
+                              LoadingDialog.show(context);
+
+                              final success = await authController.login(
+                                cEmailController.text.trim(),
+                                cPassController.text,
+                              );
+
+                              if (context.mounted) {
+                                Navigator.pop(context); // Hide loading dialog
+
+                                if (success) {
+                                  Get.offAll(() => MainWrapper());
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(authController.errorMessage.value),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              }
                             }
-                          });
-                        }
-                      },
-                    ),
+                          },
+                        )),
 
                     AppDimens.sizebox20,
                     GestureDetector(
@@ -164,9 +195,10 @@ class _LoginState extends State<Login> {
                           text: TextSpan(
                             text: "Don't have an account? ",
                             style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textsecondary.withOpacity(0.7)),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textsecondary.withOpacity(0.7),
+                            ),
                             children: [
                               TextSpan(
                                 text: 'Sign Up',
