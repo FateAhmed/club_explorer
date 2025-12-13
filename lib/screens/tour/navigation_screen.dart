@@ -4,8 +4,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
-import 'package:club_explorer/utils/AppColors.dart';
-import 'package:club_explorer/utils/AppDimens.dart';
+import 'package:explorify/utils/AppColors.dart';
+import 'package:explorify/utils/AppDimens.dart';
 import 'package:flutter_html/flutter_html.dart';
 
 class NavigationScreen extends StatefulWidget {

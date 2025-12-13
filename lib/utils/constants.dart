@@ -1,4 +1,4 @@
-import 'package:club_explorer/utils/AppColors.dart';
+import 'package:explorify/utils/AppColors.dart';
 import 'package:flutter/material.dart';
 
 var kInputDecoration = InputDecoration(

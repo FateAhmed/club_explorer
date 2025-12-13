@@ -1,5 +1,5 @@
-import 'package:club_explorer/utils/AppColors.dart';
-import 'package:club_explorer/utils/AppStrings.dart';
+import 'package:explorify/utils/AppColors.dart';
+import 'package:explorify/utils/AppStrings.dart';
 import 'package:flutter/material.dart';
 
 validateEmail(String value) {

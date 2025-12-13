@@ -1,4 +1,4 @@
-package com.example.club_explorer
+package com.example.explorify
 
 import io.flutter.embedding.android.FlutterActivity
 

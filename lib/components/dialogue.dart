@@ -1,7 +1,6 @@
-import 'package:club_explorer/utils/AppColors.dart';
-import 'package:club_explorer/utils/AppDimens.dart';
+import 'package:explorify/utils/AppColors.dart';
+import 'package:explorify/utils/AppDimens.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 class ThemeDialogue extends StatelessWidget {
   final VoidCallback? onpress;

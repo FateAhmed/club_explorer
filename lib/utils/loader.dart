@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:club_explorer/utils/AppDimens.dart';
-import 'package:club_explorer/utils/AppColors.dart';
+import 'package:explorify/utils/AppDimens.dart';
+import 'package:explorify/utils/AppColors.dart';
 
 class LoadingDialog {
   static void show(BuildContext context) {

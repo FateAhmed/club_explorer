@@ -1,7 +1,7 @@
-import 'package:club_explorer/components/theme_button.dart';
-import 'package:club_explorer/screens/auth/create_pass.dart';
-import 'package:club_explorer/utils/AppColors.dart';
-import 'package:club_explorer/utils/AppDimens.dart';
+import 'package:explorify/components/theme_button.dart';
+import 'package:explorify/screens/auth/create_pass.dart';
+import 'package:explorify/utils/AppColors.dart';
+import 'package:explorify/utils/AppDimens.dart';
 
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:flutter/material.dart';
@@ -56,8 +56,7 @@ class _OtpScreenState extends State<OtpScreen> {
                   alignment: Alignment.center,
                   child: Text(
                     'We have just sent you 4 digit code via your email example@gmail.com',
-                    style:
-                        TextStyle(fontSize: 14, color: AppColors.textsecondary),
+                    style: TextStyle(fontSize: 14, color: AppColors.textsecondary),
                     textAlign: TextAlign.center,
                   ),
                 ),

@@ -1,5 +1,5 @@
-import 'package:club_explorer/utils/AppColors.dart';
-import 'package:club_explorer/utils/AppDimens.dart';
+import 'package:explorify/utils/AppColors.dart';
+import 'package:explorify/utils/AppDimens.dart';
 import 'package:flutter/material.dart';
 
 class ThemeButton extends StatelessWidget {
@@ -14,8 +14,7 @@ class ThemeButton extends StatelessWidget {
   final double? iconHeight;
   final double? iconWidth;
   final double? fontsize;
-  final bool? bold;
-
+  final FontWeight? fontWeight;
   const ThemeButton({
     super.key,
     required this.text,
@@ -25,7 +24,7 @@ class ThemeButton extends StatelessWidget {
     this.fontsize,
     this.iconHeight,
     this.width,
-    this.bold,
+    this.fontWeight,
     this.iconWidth,
     this.textColor,
     this.hights,
@@ -44,8 +43,7 @@ class ThemeButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
           )),
       child: Ink(
-        decoration: BoxDecoration(
-            color: AppColors.primary1, borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(color: AppColors.primary1, borderRadius: BorderRadius.circular(10)),
         child: Container(
           width: width ?? double.infinity,
           height: hights ?? height * 0.7,
@@ -60,10 +58,10 @@ class ThemeButton extends StatelessWidget {
               Text(
                 text,
                 style: TextStyle(
-                    fontSize: fontsize ?? 18,
-                    fontWeight:
-                        bold == false ? FontWeight.normal : FontWeight.bold,
-                    color: textColor ?? AppColors.textprimary),
+                  fontSize: fontsize ?? 18,
+                  fontWeight: fontWeight ?? FontWeight.bold,
+                  color: textColor ?? AppColors.textprimary,
+                ),
               ),
               if (icon != null)
                 Padding(

@@ -1,4 +1,4 @@
-# club_explorer
+# explorify
 
 A new Flutter project.
 

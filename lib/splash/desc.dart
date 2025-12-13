@@ -1,8 +1,10 @@
-import 'package:club_explorer/components/theme_button.dart';
-import 'package:club_explorer/screens/auth/login.dart';
-import 'package:club_explorer/screens/auth/signup.dart';
-import 'package:club_explorer/utils/AppColors.dart';
-import 'package:club_explorer/utils/AppDimens.dart';
+import 'package:explorify/components/theme_button.dart';
+import 'package:explorify/screens/auth/login.dart';
+import 'package:explorify/screens/auth/signup.dart';
+import 'package:explorify/controllers/auth_controller.dart';
+import 'package:explorify/screens/mainwrapper/mainwrapper.dart';
+import 'package:explorify/utils/AppColors.dart';
+import 'package:explorify/utils/AppDimens.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:get/get.dart';
@@ -16,9 +18,8 @@ class SplashDetail extends StatefulWidget {
 
 class _SplashDetailState extends State<SplashDetail> {
   int currentIndex = 0;
-
-  final CarouselSliderController carouselController =
-      CarouselSliderController();
+  final AuthController authController = Get.find<AuthController>();
+  final CarouselSliderController carouselController = CarouselSliderController();
 
   final List<Map<String, String>> carouselData = [
     {
@@ -59,8 +60,7 @@ class _SplashDetailState extends State<SplashDetail> {
                     ),
                   ),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 40),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
                     alignment: Alignment.bottomCenter,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -134,9 +134,7 @@ class _SplashDetailState extends State<SplashDetail> {
                       height: 8,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
-                        color: currentIndex == index
-                            ? AppColors.primary1
-                            : AppColors.grey300,
+                        color: currentIndex == index ? AppColors.primary1 : AppColors.grey300,
                       ),
                     ),
                   ),
@@ -149,12 +147,15 @@ class _SplashDetailState extends State<SplashDetail> {
               left: 24,
               right: 24,
               child: ThemeButton(
-                text: currentIndex == carouselData.length - 1
-                    ? 'Get Started'
-                    : 'Continue',
+                text: currentIndex == carouselData.length - 1 ? 'Get Started' : 'Continue',
                 onpress: () {
                   if (currentIndex == carouselData.length - 1) {
-                    Get.to(() => Login());
+                    // Check if user is already logged in
+                    if (authController.isLoggedIn) {
+                      Get.offAll(() => MainWrapper());
+                    } else {
+                      Get.to(() => Login());
+                    }
                   } else {
                     carouselController.nextPage();
                   }

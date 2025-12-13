@@ -1,11 +1,11 @@
-import 'package:club_explorer/utils/AppColors.dart';
+import 'package:explorify/utils/AppColors.dart';
 import 'package:flutter/material.dart';
 
 class SearchField extends StatelessWidget {
   final String text;
   final VoidCallback? onpress;
-  final Image? posticon;
-  final Image? preicon;
+  final Widget? posticon;
+  final Widget? preicon;
   final double? height;
   final BorderSide? border;
   final BorderRadius? radius;
@@ -32,8 +32,7 @@ class SearchField extends StatelessWidget {
     return TextField(
       decoration: InputDecoration(
         hintText: text,
-        hintStyle:
-            TextStyle(color: AppColors.grey, fontWeight: FontWeight.bold),
+        hintStyle: TextStyle(color: AppColors.grey, fontWeight: FontWeight.bold),
         prefixIcon: preicon != null
             ? Padding(
                 padding: const EdgeInsets.all(12.0),
@@ -45,34 +44,29 @@ class SearchField extends StatelessWidget {
           child: Padding(
             padding: EdgeInsets.all(postIconPadding ?? 4.0),
             child: Row(
-              mainAxisSize:
-                  MainAxisSize.min, // ✅ Prevents row from taking full width
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  height: 24, // Match TextField height
+                  height: 24,
                   width: 1,
                   color: AppColors.grey,
-                  margin: EdgeInsets.only(
-                      right: 4), // Space between divider and icon
+                  margin: EdgeInsets.only(right: 4), // Space between divider and icon
                 ),
-                posticon ?? SizedBox(), // Your actual icon widget
+                posticon ?? SizedBox(),
               ],
             ),
           ),
         ),
         filled: true,
         fillColor: color ?? AppColors.white,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         enabledBorder: OutlineInputBorder(
           borderRadius: radius ?? BorderRadius.circular(25),
-          borderSide:
-              BorderSide(color: AppColors.grey400), // ✅ Your custom color
+          borderSide: BorderSide(color: AppColors.grey400), // ✅ Your custom color
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: radius ?? BorderRadius.circular(25),
-          borderSide: BorderSide(
-              color: AppColors.grey, width: 2), // Optional bold focus
+          borderSide: BorderSide(color: AppColors.grey, width: 2), // Optional bold focus
         ),
         border: OutlineInputBorder(
           borderRadius: radius ?? BorderRadius.circular(25),

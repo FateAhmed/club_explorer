@@ -1,9 +1,9 @@
-import 'package:club_explorer/components/dialogue.dart';
-import 'package:club_explorer/components/theme_button.dart';
-import 'package:club_explorer/components/theme_field.dart';
-import 'package:club_explorer/utils/AppColors.dart';
-import 'package:club_explorer/utils/AppDimens.dart';
-import 'package:club_explorer/utils/Validations.dart';
+import 'package:explorify/components/dialogue.dart';
+import 'package:explorify/components/theme_button.dart';
+import 'package:explorify/components/theme_field.dart';
+import 'package:explorify/utils/AppColors.dart';
+import 'package:explorify/utils/AppDimens.dart';
+import 'package:explorify/utils/Validations.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

@@ -1,6 +1,6 @@
-import 'package:club_explorer/screens/chat/messages_screen.dart';
-import 'package:club_explorer/screens/home/home.dart';
-import 'package:club_explorer/screens/profile/profile_screen.dart';
+import 'package:explorify/screens/chat/messages_screen.dart';
+import 'package:explorify/screens/home/home.dart';
+import 'package:explorify/screens/profile/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

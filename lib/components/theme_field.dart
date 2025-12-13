@@ -1,5 +1,5 @@
-import 'package:club_explorer/utils/AppColors.dart';
-import 'package:club_explorer/utils/TextFieldStyle.dart';
+import 'package:explorify/utils/AppColors.dart';
+import 'package:explorify/utils/TextFieldStyle.dart';
 import 'package:flutter/material.dart';
 
 class CustomTextFormField extends StatefulWidget {

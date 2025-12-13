@@ -2,53 +2,55 @@ import 'dart:convert';
 
 class TourModel {
   String title;
+  String searchId;
   String overview;
-  String description;
-  String routeMapImage;
+  String? description;
+  String? routeMapImage;
   String startLocation;
   String endLocation;
   List<DateTime> startDate;
   List<DateTime> endDate;
-  List<String> season;
-  String temperatureRange;
+  List<String>? season;
+  String? temperatureRange;
   bool guided;
-  List<String> languagesOffered;
-  List<Package> packages;
-  List<Itinerary> itinerary;
-  List<String> includedItems;
-  List<String> excludedItems;
-  String createdBy;
-  DateTime createdAt;
-  DateTime updatedAt;
+  List<String>? languagesOffered;
+  List<Package>? packages;
+  List<Itinerary>? itinerary;
+  List<String>? includedItems;
+  List<String>? excludedItems;
+  String? createdBy;
+  DateTime? createdAt;
+  DateTime? updatedAt;
   String endLocationId;
   String startLocationId;
   String id;
-  List<TourPoint> tourPoints;
+  List<TourPoint>? tourPoints;
 
   TourModel({
     required this.title,
+    required this.searchId,
     required this.overview,
-    required this.description,
-    required this.routeMapImage,
+    this.description,
+    this.routeMapImage,
     required this.startLocation,
     required this.endLocation,
     required this.startDate,
     required this.endDate,
-    required this.season,
-    required this.temperatureRange,
+    this.season,
+    this.temperatureRange,
     required this.guided,
-    required this.languagesOffered,
-    required this.packages,
-    required this.itinerary,
-    required this.includedItems,
-    required this.excludedItems,
-    required this.createdBy,
-    required this.createdAt,
-    required this.updatedAt,
+    this.languagesOffered,
+    this.packages,
+    this.itinerary,
+    this.includedItems,
+    this.excludedItems,
+    this.createdBy,
+    this.createdAt,
+    this.updatedAt,
     required this.endLocationId,
     required this.startLocationId,
     required this.id,
-    required this.tourPoints,
+    this.tourPoints,
   });
 
   factory TourModel.fromRawJson(String str) => TourModel.fromJson(json.decode(str));
@@ -57,57 +59,70 @@ class TourModel {
 
   factory TourModel.fromJson(Map<String, dynamic> json) {
     return TourModel(
-      title: json["title"],
-      overview: json["overview"],
+      title: json["title"] ?? '',
+      searchId: json["searchId"] ?? '',
+      overview: json["overview"] ?? '',
       description: json["description"],
       routeMapImage: json["routeMapImage"],
-      startLocation: json["startLocation"],
-      endLocation: json["endLocation"],
-      startDate: List<DateTime>.from(json["startDate"].map((x) => DateTime.parse(x))),
-      endDate: List<DateTime>.from(json["endDate"].map((x) => DateTime.parse(x))),
-      season: List<String>.from(json["season"].map((x) => x)),
+      startLocation: json["startLocation"] ?? '',
+      endLocation: json["endLocation"] ?? '',
+      startDate: json["startDate"] != null
+          ? List<DateTime>.from(json["startDate"].map((x) => DateTime.parse(x)))
+          : [],
+      endDate:
+          json["endDate"] != null ? List<DateTime>.from(json["endDate"].map((x) => DateTime.parse(x))) : [],
+      season: json["season"] != null ? List<String>.from(json["season"].map((x) => x)) : null,
       temperatureRange: json["temperatureRange"],
-      guided: json["guided"],
-      languagesOffered: List<String>.from(json["languagesOffered"].map((x) => x)),
-      packages: List<Package>.from(json["packages"].map((x) => Package.fromJson(x))),
-      itinerary: List<Itinerary>.from(json["itinerary"].map((x) => Itinerary.fromJson(x))),
-      includedItems: List<String>.from(json["includedItems"].map((x) => x)),
-      excludedItems: List<String>.from(json["excludedItems"].map((x) => x)),
-      createdBy: json["createdBy"],
-      createdAt: DateTime.parse(json["createdAt"]),
-      updatedAt: DateTime.parse(json["updatedAt"]),
-      endLocationId: json["endLocationId"],
-      startLocationId: json["startLocationId"],
-      id: json["id"],
-      tourPoints: json["tourPoints"] == null
-          ? []
-          : List<TourPoint>.from(json["tourPoints"].map((x) => TourPoint.fromMap(x))),
+      guided: json["guided"] ?? true,
+      languagesOffered:
+          json["languagesOffered"] != null ? List<String>.from(json["languagesOffered"].map((x) => x)) : null,
+      packages: json["packages"] != null
+          ? List<Package>.from(json["packages"].map((x) => Package.fromJson(x)))
+          : null,
+      itinerary: json["itinerary"] != null
+          ? List<Itinerary>.from(json["itinerary"].map((x) => Itinerary.fromJson(x)))
+          : null,
+      includedItems:
+          json["includedItems"] != null ? List<String>.from(json["includedItems"].map((x) => x)) : null,
+      excludedItems:
+          json["excludedItems"] != null ? List<String>.from(json["excludedItems"].map((x) => x)) : null,
+      createdBy: json["createdBy"]?.toString(),
+      createdAt: json["createdAt"] != null ? DateTime.parse(json["createdAt"]) : null,
+      updatedAt: json["updatedAt"] != null ? DateTime.parse(json["updatedAt"]) : null,
+      endLocationId: json["endLocationId"] ?? '',
+      startLocationId: json["startLocationId"] ?? '',
+      id: json["_id"]?.toString() ?? json["id"]?.toString() ?? '',
+      tourPoints: json["tourPoints"] != null
+          ? List<TourPoint>.from(json["tourPoints"].map((x) => TourPoint.fromMap(x)))
+          : null,
     );
   }
 
   Map<String, dynamic> toJson() => {
         "title": title,
+        "searchId": searchId,
         "overview": overview,
-        "description": description,
-        "routeMapImage": routeMapImage,
+        if (description != null) "description": description,
+        if (routeMapImage != null) "routeMapImage": routeMapImage,
         "startLocation": startLocation,
         "endLocation": endLocation,
         "startDate": List<dynamic>.from(startDate.map((x) => x.toIso8601String())),
         "endDate": List<dynamic>.from(endDate.map((x) => x.toIso8601String())),
-        "season": List<dynamic>.from(season.map((x) => x)),
-        "temperatureRange": temperatureRange,
+        if (season != null) "season": List<dynamic>.from(season!.map((x) => x)),
+        if (temperatureRange != null) "temperatureRange": temperatureRange,
         "guided": guided,
-        "languagesOffered": List<dynamic>.from(languagesOffered.map((x) => x)),
-        "packages": List<dynamic>.from(packages.map((x) => x.toJson())),
-        "itinerary": List<dynamic>.from(itinerary.map((x) => x.toJson())),
-        "includedItems": List<dynamic>.from(includedItems.map((x) => x)),
-        "excludedItems": List<dynamic>.from(excludedItems.map((x) => x)),
-        "createdBy": createdBy,
-        "createdAt": createdAt.toIso8601String(),
-        "updatedAt": updatedAt.toIso8601String(),
+        if (languagesOffered != null) "languagesOffered": List<dynamic>.from(languagesOffered!.map((x) => x)),
+        if (packages != null) "packages": List<dynamic>.from(packages!.map((x) => x.toJson())),
+        if (itinerary != null) "itinerary": List<dynamic>.from(itinerary!.map((x) => x.toJson())),
+        if (includedItems != null) "includedItems": List<dynamic>.from(includedItems!.map((x) => x)),
+        if (excludedItems != null) "excludedItems": List<dynamic>.from(excludedItems!.map((x) => x)),
+        if (createdBy != null) "createdBy": createdBy,
+        if (createdAt != null) "createdAt": createdAt!.toIso8601String(),
+        if (updatedAt != null) "updatedAt": updatedAt!.toIso8601String(),
         "endLocationId": endLocationId,
         "startLocationId": startLocationId,
         "id": id,
+        if (tourPoints != null) "tourPoints": List<dynamic>.from(tourPoints!.map((x) => x.toMap())),
       };
 }
 
@@ -137,12 +152,13 @@ class TourPoint {
   }
 
   factory TourPoint.fromMap(Map<String, dynamic> map) {
+    final position = map['position'] as Map<String, dynamic>?;
     return TourPoint(
-      id: map['id'] as String,
-      name: map['name'] as String,
-      description: map['description'] as String,
-      lat: map['position']['lat'] as double,
-      lng: map['position']['lng'] as double,
+      id: map['id']?.toString() ?? '',
+      name: map['name']?.toString() ?? '',
+      description: map['description']?.toString() ?? '',
+      lat: (position?['lat'] ?? 0.0).toDouble(),
+      lng: (position?['lng'] ?? 0.0).toDouble(),
     );
   }
 
@@ -152,7 +168,6 @@ class TourPoint {
 }
 
 class Itinerary {
-  String id;
   int day;
   String title;
   String description;
@@ -160,7 +175,6 @@ class Itinerary {
   String image;
 
   Itinerary({
-    required this.id,
     required this.day,
     required this.title,
     required this.description,
@@ -173,16 +187,14 @@ class Itinerary {
   String toRawJson() => json.encode(toJson());
 
   factory Itinerary.fromJson(Map<String, dynamic> json) => Itinerary(
-        id: json["_id"],
-        day: json["day"],
-        title: json["title"],
-        description: json["description"],
-        distance: json["distance"],
-        image: json["image"],
+        day: json["day"] ?? 0,
+        title: json["title"] ?? '',
+        description: json["description"] ?? '',
+        distance: json["distance"] ?? '',
+        image: json["image"] ?? '',
       );
 
   Map<String, dynamic> toJson() => {
-        "_id": id,
         "day": day,
         "title": title,
         "description": description,
@@ -192,7 +204,6 @@ class Itinerary {
 }
 
 class Package {
-  String id;
   String name;
   int price;
   bool perPerson;
@@ -201,7 +212,6 @@ class Package {
   List<String> excluded;
 
   Package({
-    required this.id,
     required this.name,
     required this.price,
     required this.perPerson,
@@ -215,17 +225,17 @@ class Package {
   String toRawJson() => json.encode(toJson());
 
   factory Package.fromJson(Map<String, dynamic> json) => Package(
-        id: json["_id"],
-        name: json["name"],
-        price: json["price"],
-        perPerson: json["perPerson"],
-        details: json["details"],
-        included: List<String>.from(json["included"].map((x) => x)),
-        excluded: List<String>.from(json["excluded"].map((x) => x)),
+        name: json["name"]?.toString() ?? '',
+        price: (json["price"] ?? 0).toInt(),
+        perPerson: json["perPerson"] ?? false,
+        details: json["details"]?.toString() ?? '',
+        included:
+            json["included"] != null ? List<String>.from(json["included"].map((x) => x.toString())) : [],
+        excluded:
+            json["excluded"] != null ? List<String>.from(json["excluded"].map((x) => x.toString())) : [],
       );
 
   Map<String, dynamic> toJson() => {
-        "_id": id,
         "name": name,
         "price": price,
         "perPerson": perPerson,

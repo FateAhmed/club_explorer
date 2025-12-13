@@ -1,13 +1,13 @@
-import 'package:club_explorer/screens/home/web_widget/web_widget.dart';
-import 'package:club_explorer/screens/tour/navigation_screen.dart';
+import 'package:explorify/screens/home/web_widget/web_widget.dart';
+import 'package:explorify/screens/tour/navigation_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:ui' as ui;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:club_explorer/utils/AppColors.dart';
-import 'package:club_explorer/utils/AppDimens.dart';
+import 'package:explorify/utils/AppColors.dart';
+import 'package:explorify/utils/AppDimens.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:async';
 

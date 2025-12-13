@@ -1,13 +1,18 @@
-import 'package:club_explorer/splash/splash.dart';
-import 'package:club_explorer/screens/mainwrapper/main_wrapper_controller.dart';
+import 'package:explorify/splash/splash.dart';
+import 'package:explorify/screens/mainwrapper/main_wrapper_controller.dart';
+import 'package:explorify/controllers/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 void main() async {
-  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
+
+  // Initialize controllers
+  Get.put(AuthController(), permanent: true);
   Get.put(MainWrapperController());
+
   runApp(const MyApp());
 }
 
@@ -17,14 +22,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'Club Explorer',
+      title: 'Explorify',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: SplashScreen(),
-      // initialBinding: ControllerBinding(),
+      home: const SplashScreen(),
     );
   }
 }

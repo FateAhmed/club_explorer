@@ -1,5 +1,5 @@
-import 'package:club_explorer/utils/AppColors.dart';
-import 'package:club_explorer/utils/AppDimens.dart';
+import 'package:explorify/utils/AppColors.dart';
+import 'package:explorify/utils/AppDimens.dart';
 import 'package:flutter/material.dart';
 
 class SubscribePackageCard extends StatelessWidget {
@@ -22,8 +22,6 @@ class SubscribePackageCard extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
-    var width = MediaQuery.of(context).size.width;
-
     return GestureDetector(
       onTap: onpress,
       child: Card(

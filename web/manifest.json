@@ -1,6 +1,6 @@
 {
-    "name": "club_explorer",
-    "short_name": "club_explorer",
+    "name": "Explorify",
+    "short_name": "Explorify",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
