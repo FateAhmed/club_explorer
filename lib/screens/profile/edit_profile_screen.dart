@@ -27,6 +27,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController phoneController;
   late TextEditingController addressController;
 
+  final FocusNode nameFocusNode = FocusNode();
+  final FocusNode emailFocusNode = FocusNode();
+  final FocusNode phoneFocusNode = FocusNode();
+  final FocusNode addressFocusNode = FocusNode();
+
   File? _selectedImage;
 
   @override
@@ -54,6 +59,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     emailController.dispose();
     phoneController.dispose();
     addressController.dispose();
+    nameFocusNode.dispose();
+    emailFocusNode.dispose();
+    phoneFocusNode.dispose();
+    addressFocusNode.dispose();
     super.dispose();
   }
 
@@ -332,7 +341,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   CustomTextFormField(
                     title: 'Enter your full name',
                     controller: nameController,
-                    focusNode: FocusNode(),
+                    focusNode: nameFocusNode,
                     validator: (e) => validateName(e),
                   ),
 
@@ -354,7 +363,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   CustomTextFormField(
                     title: 'Email address',
                     controller: emailController,
-                    focusNode: FocusNode(),
+                    focusNode: emailFocusNode,
                     readOnly: true,
                     validator: (e) => null,
                   ),
@@ -390,7 +399,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   CustomTextFormField(
                     title: 'Enter your phone number',
                     controller: phoneController,
-                    focusNode: FocusNode(),
+                    focusNode: phoneFocusNode,
                     textInputType: TextInputType.phone,
                     validator: (e) => null,
                   ),
@@ -413,7 +422,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   CustomTextFormField(
                     title: 'Enter your address',
                     controller: addressController,
-                    focusNode: FocusNode(),
+                    focusNode: addressFocusNode,
                     validator: (e) => null,
                   ),
 
