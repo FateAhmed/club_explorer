@@ -1,6 +1,10 @@
-import 'package:club_explorer/components/theme_button.dart';
-import 'package:club_explorer/utils/AppColors.dart';
-import 'package:club_explorer/utils/AppDimens.dart';
+import 'dart:io';
+import 'package:explorify/components/theme_button.dart';
+import 'package:explorify/utils/AppColors.dart';
+import 'package:explorify/utils/AppDimens.dart';
+import 'package:explorify/controllers/auth_controller.dart';
+import 'package:explorify/screens/auth/login.dart';
+import 'package:explorify/screens/profile/edit_profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -12,6 +16,43 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final AuthController authController = Get.find<AuthController>();
+
+  String _getInitials() {
+    final name = authController.userName;
+    if (name.isEmpty) return 'U';
+    final parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return name[0].toUpperCase();
+  }
+
+  Widget _buildAvatar() {
+    final imagePath = authController.userProfileImage;
+    final hasImage = imagePath.isNotEmpty && File(imagePath).existsSync();
+
+    if (hasImage) {
+      return CircleAvatar(
+        radius: 50,
+        backgroundImage: FileImage(File(imagePath)),
+      );
+    }
+
+    return CircleAvatar(
+      radius: 50,
+      backgroundColor: AppColors.primary1,
+      child: Text(
+        _getInitials(),
+        style: const TextStyle(
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,32 +86,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   child: Column(
                     children: [
-                      CircleAvatar(
-                        radius: 50,
-                        backgroundImage: AssetImage('assets/icons/sample-user.png'),
-                      ),
+                      Obx(() => _buildAvatar()),
                       AppDimens.sizebox20,
-                      Text(
-                        'Matr Kohler',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textprimary,
-                        ),
-                      ),
+                      Obx(() => Text(
+                            authController.userName.isNotEmpty ? authController.userName : 'User',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textprimary,
+                            ),
+                          )),
                       AppDimens.sizebox5,
-                      Text(
-                        'matr.kohler@example.com',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textsecondary,
-                        ),
-                      ),
+                      Obx(() => Text(
+                            authController.userEmail,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textsecondary,
+                            ),
+                          )),
                       AppDimens.sizebox20,
                       ThemeButton(
                         text: 'Edit Profile',
                         onpress: () {
-                          // TODO: Navigate to edit profile screen
+                          Get.to(() => const EditProfileScreen());
                         },
                         color: AppColors.primary1,
                         textColor: AppColors.white,
@@ -110,7 +148,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         title: 'Privacy & Security',
                         subtitle: 'Manage your privacy settings',
                         onTap: () {
-                          // TODO: Navigate to privacy settings
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('This feature is coming soon'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
                         },
                       ),
                       _buildDivider(),
@@ -119,7 +162,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         title: 'Help & Support',
                         subtitle: 'Get help and contact support',
                         onTap: () {
-                          // TODO: Navigate to help screen
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('This feature is coming soon'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
                         },
                       ),
                       _buildDivider(),
@@ -128,7 +176,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         title: 'About',
                         subtitle: 'App version and information',
                         onTap: () {
-                          // TODO: Navigate to about screen
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('This feature is coming soon'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
                         },
                       ),
                     ],
@@ -164,7 +217,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         title: 'Personal Information',
                         subtitle: 'Update your personal details',
                         onTap: () {
-                          // TODO: Navigate to personal info screen
+                          Get.to(() => const EditProfileScreen());
                         },
                       ),
                       _buildDivider(),
@@ -173,7 +226,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         title: 'Payment Methods',
                         subtitle: 'Manage your payment options',
                         onTap: () {
-                          // TODO: Navigate to payment methods
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('This feature is coming soon'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
                         },
                       ),
                       _buildDivider(),
@@ -182,7 +240,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         title: 'Booking History',
                         subtitle: 'View your past bookings',
                         onTap: () {
-                          // TODO: Navigate to booking history
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('This feature is coming soon'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
                         },
                       ),
                     ],
@@ -198,7 +261,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   textColor: AppColors.white,
                   hights: 50,
                   fontsize: 16,
-                  bold: true,
+                  fontWeight: FontWeight.bold,
                 ),
                 AppDimens.sizebox10,
               ],
@@ -339,10 +402,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _logout() {
-    // TODO: Implement logout logic
-    // This should clear user data, tokens, etc.
-    // For now, we'll just navigate to login screen
-    Get.offAllNamed('/login'); // Assuming you have a login route
+  void _logout() async {
+    await authController.logout();
+    Get.offAll(() => const Login());
   }
 }
