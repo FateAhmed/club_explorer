@@ -1,8 +1,9 @@
-import 'package:club_explorer/screens/mainwrapper/main_wrapper_controller.dart';
-import 'package:club_explorer/utils/AppColors.dart';
+import 'package:explorify/screens/mainwrapper/main_wrapper_controller.dart';
+import 'package:explorify/utils/AppColors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:zoom_tap_animation/zoom_tap_animation.dart';
+import 'package:flutter/cupertino.dart';
 
 class MainWrapper extends StatelessWidget {
   MainWrapper({super.key});
@@ -28,37 +29,31 @@ class MainWrapper extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _bottomAppBarItem(
-                icon: 'assets/icons/home_b.png',
+                icon: Icon(
+                  CupertinoIcons.home,
+                  color: _mainWrapperController.currentPage == 0 ? AppColors.primary1 : Colors.grey,
+                  size: 22,
+                ),
                 page: 0,
                 context,
                 label: "Home",
               ),
-              // _bottomAppBarItem(
-              //   icon: 'assets/icons/bike_b.png',
-              //   page: 1,
-              //   context,
-              //   label: "Rental",
-              // ),
-              // _bottomAppBarItem(
-              //   icon: 'assets/icons/map_b.png',
-              //   page: 2,
-              //   context,
-              //   label: "Tours",
-              // ),
-              // _bottomAppBarItem(
-              //   icon: 'assets/icons/bed_b.png',
-              //   page: 3,
-              //   context,
-              //   label: "Hotels",
-              // ),
               _bottomAppBarItem(
-                icon: 'assets/icons/chat_b.png',
+                icon: Icon(
+                  CupertinoIcons.chat_bubble_text,
+                  color: _mainWrapperController.currentPage == 1 ? AppColors.primary1 : Colors.grey,
+                  size: 22,
+                ),
                 page: 1,
                 context,
                 label: "Message",
               ),
               _bottomAppBarItem(
-                icon: 'assets/icons/user.png',
+                icon: Icon(
+                  CupertinoIcons.person,
+                  color: _mainWrapperController.currentPage == 2 ? AppColors.primary1 : Colors.grey,
+                  size: 22,
+                ),
                 page: 2,
                 context,
                 label: "Profile",
@@ -70,7 +65,7 @@ class MainWrapper extends StatelessWidget {
     );
   }
 
-  Widget _bottomAppBarItem(BuildContext context, {required icon, required page, required label}) {
+  Widget _bottomAppBarItem(BuildContext context, {required Widget icon, required page, required label}) {
     return ZoomTapAnimation(
       onTap: () => _mainWrapperController.goToTab(page),
       child: Container(
@@ -78,17 +73,13 @@ class MainWrapper extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Image.asset(
-              '$icon',
-              color: _mainWrapperController.currentPage == page ? AppColors.primary1 : Colors.grey,
-              height: 25,
-              width: 25,
-            ),
+            icon,
+            const SizedBox(height: 2),
             Text(
               label,
               style: TextStyle(
                 color: _mainWrapperController.currentPage == page ? AppColors.primary1 : Colors.grey,
-                fontSize: 13,
+                fontSize: 11,
                 fontWeight: _mainWrapperController.currentPage == page ? FontWeight.w600 : null,
               ),
             ),
