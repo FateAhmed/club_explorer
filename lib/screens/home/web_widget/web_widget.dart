@@ -20,10 +20,10 @@ class _WebViewPageState extends State<WebViewPage> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (url) {
-            setState(() => _isLoading = true);
+            if (mounted) setState(() => _isLoading = true);
           },
           onPageFinished: (url) {
-            setState(() => _isLoading = false);
+            if (mounted) setState(() => _isLoading = false);
           },
         ),
       )
