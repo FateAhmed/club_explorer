@@ -1,15 +1,17 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:ui' as ui;
+
+import 'package:explorify/config/routes.dart';
 import 'package:explorify/screens/home/web_widget/web_widget.dart';
 import 'package:explorify/screens/tour/navigation_screen.dart';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'dart:ui' as ui;
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:explorify/utils/AppColors.dart';
 import 'package:explorify/utils/AppDimens.dart';
+import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'dart:async';
+import 'package:get/get.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:http/http.dart' as http;
 
 class TourRouteScreen extends StatefulWidget {
   final String tourName;
@@ -987,7 +989,7 @@ class _TourRouteScreenState extends State<TourRouteScreen> {
                       child: ElevatedButton(
                         onPressed: () {
                           Get.to(() => WebViewPage(
-                              url: 'https://app-club-explorer.ahmadt.com/tour/tour-detail/${widget.tourId}'));
+                              url: WebRoutes.tourDetail(widget.tourId)));
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.white,

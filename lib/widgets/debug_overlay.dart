@@ -121,8 +121,8 @@ class _DebugOverlayState extends State<DebugOverlay> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildInfoRow('API Base URL', ApiConfig.currentApiBaseUrl),
-        _buildInfoRow('WebSocket URL', ApiConfig.currentWebsocketUrl),
+        _buildInfoRow('API Base URL', ApiConfig.baseUrl),
+        _buildInfoRow('WebSocket URL', ApiConfig.wsUrl),
         _buildInfoRow('WebSocket Status', webSocketService.isConnected ? 'Connected' : 'Disconnected'),
         _buildInfoRow(
             'Auth Token',

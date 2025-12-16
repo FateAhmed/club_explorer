@@ -58,7 +58,7 @@ class AuthController extends GetxController {
 
     try {
       final response = await http.get(
-        Uri.parse('${ApiConfig.userBaseUrl}/profile'),
+        Uri.parse('${ApiConfig.users}/profile'),
         headers: _authHeaders,
       ).timeout(const Duration(seconds: 10));
 
@@ -91,7 +91,7 @@ class AuthController extends GetxController {
       errorMessage.value = '';
 
       final response = await http.post(
-        Uri.parse('${ApiConfig.authBaseUrl}/login'),
+        Uri.parse('${ApiConfig.auth}/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': email.trim().toLowerCase(),
@@ -138,7 +138,7 @@ class AuthController extends GetxController {
       if (address != null && address.isNotEmpty) body['address'] = address.trim();
 
       final response = await http.post(
-        Uri.parse('${ApiConfig.authBaseUrl}/register'),
+        Uri.parse('${ApiConfig.auth}/register'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(body),
       ).timeout(const Duration(seconds: 30));
@@ -167,7 +167,7 @@ class AuthController extends GetxController {
       errorMessage.value = '';
 
       final response = await http.post(
-        Uri.parse('${ApiConfig.authBaseUrl}/google'),
+        Uri.parse('${ApiConfig.auth}/google'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'token': token}),
       ).timeout(const Duration(seconds: 30));
@@ -195,7 +195,7 @@ class AuthController extends GetxController {
 
     try {
       final response = await http.post(
-        Uri.parse('${ApiConfig.authBaseUrl}/refresh-token'),
+        Uri.parse('${ApiConfig.auth}/refresh-token'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'refreshToken': refreshToken.value}),
       ).timeout(const Duration(seconds: 15));
@@ -222,7 +222,7 @@ class AuthController extends GetxController {
       errorMessage.value = '';
 
       final response = await http.post(
-        Uri.parse('${ApiConfig.authBaseUrl}/reset-password'),
+        Uri.parse('${ApiConfig.auth}/reset-password'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email.trim().toLowerCase()}),
       ).timeout(const Duration(seconds: 30));
@@ -250,7 +250,7 @@ class AuthController extends GetxController {
       errorMessage.value = '';
 
       final response = await http.post(
-        Uri.parse('${ApiConfig.authBaseUrl}/update-password'),
+        Uri.parse('${ApiConfig.auth}/update-password'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'token': token,
@@ -290,7 +290,7 @@ class AuthController extends GetxController {
       if (address != null) body['address'] = address.trim();
 
       final response = await http.put(
-        Uri.parse('${ApiConfig.userBaseUrl}/profile'),
+        Uri.parse('${ApiConfig.users}/profile'),
         headers: _authHeaders,
         body: jsonEncode(body),
       ).timeout(const Duration(seconds: 30));
@@ -323,7 +323,7 @@ class AuthController extends GetxController {
       errorMessage.value = '';
 
       final response = await http.put(
-        Uri.parse('${ApiConfig.userBaseUrl}/password'),
+        Uri.parse('${ApiConfig.users}/password'),
         headers: _authHeaders,
         body: jsonEncode({
           'currentPassword': currentPassword,

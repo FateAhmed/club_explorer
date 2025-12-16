@@ -211,7 +211,7 @@ class WebSocketService {
     // Attempt to reconnect after 3 seconds
     Future.delayed(Duration(seconds: 3), () {
       if (_userId != null) {
-        connect(ApiConfig.currentWebsocketUrl, _userId!);
+        connect(ApiConfig.wsUrl, _userId!);
       }
     });
   }
