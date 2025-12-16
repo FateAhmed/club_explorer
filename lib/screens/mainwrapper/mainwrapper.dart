@@ -13,17 +13,18 @@ class MainWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.grey100,
-      // resizeToAvoidBottomInset: true,
       body: PageView(
         controller: _mainWrapperController.pageController,
         physics: const NeverScrollableScrollPhysics(),
         onPageChanged: _mainWrapperController.animateToTab,
         children: [..._mainWrapperController.pages],
       ),
-      bottomNavigationBar: BottomAppBar(
-        padding: EdgeInsets.zero,
-        elevation: 0,
+      bottomNavigationBar: Container(
         color: Colors.white,
+        padding: EdgeInsets.only(
+          top: 12,
+          bottom: MediaQuery.of(context).padding.bottom > 0 ? 20 : 8,
+        ),
         child: Obx(
           () => Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,

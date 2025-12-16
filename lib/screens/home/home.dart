@@ -1,9 +1,9 @@
 import 'dart:io';
-import 'package:explorify/components/search_field.dart';
 import 'package:explorify/components/tour_card.dart';
 import 'package:explorify/controllers/auth_controller.dart';
 import 'package:explorify/screens/home/home_controller.dart';
 import 'package:explorify/screens/mainwrapper/main_wrapper_controller.dart';
+import 'package:explorify/screens/search/search_screen.dart';
 import 'package:explorify/utils/AppColors.dart';
 import 'package:explorify/utils/AppDimens.dart';
 import 'package:flutter/material.dart';
@@ -120,17 +120,30 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
                 AppDimens.sizebox15,
-                SearchField(
-                  color: AppColors.white.withOpacity(0.1),
-                  text: 'Search tours',
-                  onpress: () {},
-                  preicon: Icon(
-                    CupertinoIcons.search,
-                    color: AppColors.grey,
-                  ),
-                  posticon: Icon(
-                    CupertinoIcons.slider_horizontal_3,
-                    color: AppColors.grey,
+                GestureDetector(
+                  onTap: () => Get.to(() => const SearchScreen()),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: AppColors.grey100,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(CupertinoIcons.search, color: AppColors.grey),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Search tours...',
+                            style: TextStyle(
+                              color: AppColors.grey,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                        Icon(CupertinoIcons.slider_horizontal_3, color: AppColors.grey),
+                      ],
+                    ),
                   ),
                 ),
                 AppDimens.sizebox15,

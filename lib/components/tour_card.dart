@@ -12,8 +12,9 @@ import 'package:flutter/cupertino.dart';
 class TourCard extends StatelessWidget {
   final TourModel tour;
   final bool isBooked;
+  final bool isHorizontal;
 
-  const TourCard({super.key, required this.tour, this.isBooked = false});
+  const TourCard({super.key, required this.tour, this.isBooked = false, this.isHorizontal = false});
 
   @override
   Widget build(BuildContext context) {
@@ -21,13 +22,13 @@ class TourCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        Get.to(() => WebViewPage(url: 'https://app-club-explorer.ahmadt.com/tour/tour-detail/${tour.id}'));
+        Get.to(() => WebViewPage(url: 'https://explorifymotorcycle.com/tour/tour-detail/${tour.id}'));
       },
       child: Card(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        margin: const EdgeInsets.only(right: 10, top: 5, bottom: 8),
+        margin: EdgeInsets.only(right: isHorizontal ? 0 : 10, top: 5, bottom: 8),
         child: Container(
-          width: width * 0.75,
+          width: isHorizontal ? double.infinity : width * 0.75,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             color: Colors.white,
