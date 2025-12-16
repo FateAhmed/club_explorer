@@ -21,7 +21,7 @@ class HomeController extends GetxController {
   getTours() async {
     isLoading.value = true;
     try {
-      var request = http.Request('GET', Uri.parse('${ApiConfig.tourBaseUrl}'));
+      var request = http.Request('GET', Uri.parse(ApiConfig.tours));
       http.StreamedResponse response = await request.send();
       debugPrint('Response: ${response.statusCode}');
       if (response.statusCode == 200) {

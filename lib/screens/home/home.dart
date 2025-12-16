@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:explorify/components/booking_card.dart';
 import 'package:explorify/components/tour_card.dart';
 import 'package:explorify/controllers/auth_controller.dart';
 import 'package:explorify/screens/home/home_controller.dart';
@@ -6,9 +7,9 @@ import 'package:explorify/screens/mainwrapper/main_wrapper_controller.dart';
 import 'package:explorify/screens/search/search_screen.dart';
 import 'package:explorify/utils/AppColors.dart';
 import 'package:explorify/utils/AppDimens.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:flutter/cupertino.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -209,40 +210,78 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ),
                 ),
-                AppDimens.sizebox5,
+                AppDimens.sizebox20,
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Your Tour Bookings',
-                      style:
-                          TextStyle(color: AppColors.textprimary, fontSize: 20, fontWeight: FontWeight.w600),
+                      'Your Bookings',
+                      style: TextStyle(
+                        color: AppColors.textprimary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
+                    if (homeController.bookedTours.isNotEmpty)
+                      TextButton(
+                        onPressed: () {
+                          // Navigate to all bookings
+                        },
+                        child: Text(
+                          'See All',
+                          style: TextStyle(
+                            color: AppColors.primary1,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
-                AppDimens.sizebox20,
+                AppDimens.sizebox10,
                 Obx(
                   () => homeController.isLoading.value
-                      ? Center(child: CircularProgressIndicator(color: AppColors.primary1))
+                      ? const SizedBox(
+                          height: 120,
+                          child: Center(child: CircularProgressIndicator()),
+                        )
                       : homeController.bookedTours.isEmpty
-                          ? SizedBox(
-                              height: 200,
+                          ? Container(
+                              padding: const EdgeInsets.symmetric(vertical: 40),
+                              decoration: BoxDecoration(
+                                color: AppColors.grey100,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
                               child: Center(
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(
-                                      CupertinoIcons.ticket,
-                                      size: 48,
-                                      color: AppColors.grey,
+                                    Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        CupertinoIcons.ticket,
+                                        size: 32,
+                                        color: AppColors.grey,
+                                      ),
                                     ),
-                                    AppDimens.sizebox10,
+                                    const SizedBox(height: 16),
                                     Text(
-                                      'No bookings found',
+                                      'No bookings yet',
                                       style: TextStyle(
                                         fontSize: 16,
+                                        color: AppColors.textprimary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Book a tour to see it here',
+                                      style: TextStyle(
+                                        fontSize: 14,
                                         color: AppColors.grey,
-                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
                                   ],
@@ -251,7 +290,11 @@ class _HomePageState extends State<HomePage> {
                             )
                           : Column(
                               children: homeController.bookedTours
-                                  .map((tour) => TourCard(tour: tour, isBooked: true))
+                                  .map((tour) => BookingCard(
+                                        tour: tour,
+                                        status: 'Confirmed',
+                                        bookingDate: DateTime.now().subtract(const Duration(days: 3)),
+                                      ))
                                   .toList(),
                             ),
                 ),

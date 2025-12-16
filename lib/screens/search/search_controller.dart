@@ -82,7 +82,7 @@ class TourSearchController extends GetxController {
       queryParams['page'] = currentPage.value.toString();
       queryParams['limit'] = '20';
 
-      final uri = Uri.parse('${ApiConfig.tourBaseUrl}/search').replace(queryParameters: queryParams);
+      final uri = Uri.parse('${ApiConfig.tours}/search').replace(queryParameters: queryParams);
 
       debugPrint('Search URL: $uri');
 

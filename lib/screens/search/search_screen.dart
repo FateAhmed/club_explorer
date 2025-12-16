@@ -307,33 +307,20 @@ class _SearchScreenState extends State<SearchScreen> {
                       child: Icon(CupertinoIcons.slider_horizontal_3, color: AppColors.grey),
                     ),
                   ),
+                  const SizedBox(width: 10),
+                  InkWell(
+                    onTap: () => searchController.searchTours(),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary1,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(CupertinoIcons.search, color: Colors.white),
+                    ),
+                  ),
                 ],
-              ),
-            ),
-
-            // Search Button
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => searchController.searchTours(),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary1,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Search',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
               ),
             ),
 

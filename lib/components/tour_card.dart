@@ -1,4 +1,5 @@
 import 'package:explorify/components/theme_button.dart';
+import 'package:explorify/config/routes.dart';
 import 'package:explorify/models/tour.dart';
 import 'package:explorify/screens/home/web_widget/web_widget.dart';
 import 'package:explorify/screens/tour/tour_route.dart';
@@ -7,7 +8,6 @@ import 'package:explorify/utils/AppDimens.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:flutter/cupertino.dart';
 
 class TourCard extends StatelessWidget {
   final TourModel tour;
@@ -22,7 +22,8 @@ class TourCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        Get.to(() => WebViewPage(url: 'https://explorifymotorcycle.com/tour/tour-detail/${tour.id}'));
+        print(WebRoutes.tourDetail(tour.id));
+        Get.to(() => WebViewPage(url: WebRoutes.tourDetail(tour.id)));
       },
       child: Card(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
