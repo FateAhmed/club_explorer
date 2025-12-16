@@ -3,29 +3,60 @@ import 'package:explorify/screens/chat/chat.dart';
 import 'package:explorify/utils/AppColors.dart';
 import 'package:explorify/utils/AppDimens.dart';
 import 'package:explorify/controllers/chat_controller.dart';
+import 'package:explorify/models/chat_models.dart';
 import 'package:explorify/widgets/debug_overlay.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:intl/intl.dart';
 
-class MessagesScreen extends StatelessWidget {
+class MessagesScreen extends StatefulWidget {
   const MessagesScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final ChatController chatController = Get.put(ChatController());
+  State<MessagesScreen> createState() => _MessagesScreenState();
+}
 
-    // Load chats when screen initializes
+class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  late ChatController chatController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    chatController = Get.put(ChatController());
+
+    // Load all chats when screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       chatController.loadUserChats();
     });
+  }
 
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Messages'),
+        title: const Text('Messages'),
         centerTitle: true,
         backgroundColor: AppColors.grey50,
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: AppColors.primary1,
+          labelColor: AppColors.primary1,
+          unselectedLabelColor: AppColors.grey,
+          tabs: const [
+            Tab(text: 'Group Chats'),
+            Tab(text: 'Direct Messages'),
+          ],
+        ),
       ),
       backgroundColor: AppColors.grey50,
       body: Stack(
@@ -37,7 +68,7 @@ class MessagesScreen extends StatelessWidget {
                 children: [
                   AppDimens.sizebox10,
                   SearchField(
-                    color: AppColors.white.withOpacity(0.1),
+                    color: AppColors.white.withValues(alpha: 0.1),
                     text: 'Search chats',
                     onpress: () {},
                     preicon: Icon(
@@ -51,122 +82,15 @@ class MessagesScreen extends StatelessWidget {
                   ),
                   AppDimens.sizebox10,
                   Expanded(
-                    child: Obx(() {
-                      if (chatController.isLoading) {
-                        return Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.primary1,
-                          ),
-                        );
-                      }
-
-                      if (chatController.chats.isEmpty) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.chat_bubble_outline,
-                                size: 64,
-                                color: AppColors.grey,
-                              ),
-                              AppDimens.sizebox10,
-                              Text(
-                                'No chats yet',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  color: AppColors.grey,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              AppDimens.sizebox5,
-                              Text(
-                                'Start a conversation by booking a tour',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: AppColors.grey,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-
-                      return ListView.separated(
-                        padding: const EdgeInsets.only(top: 10, bottom: 10),
-                        itemCount: chatController.chats.length,
-                        separatorBuilder: (context, index) => const Divider(
-                          thickness: 0.5,
-                        ),
-                        itemBuilder: (context, index) {
-                          final chat = chatController.chats[index];
-                          final lastMessage = chat.lastMessage;
-                          final unreadCount = chatController.getUnreadCount(chat.id!);
-
-                          return ListTile(
-                            onTap: () {
-                              chatController.setCurrentChat(chat);
-                              Get.to(() => InChat(
-                                    chatId: chat.id!,
-                                    chatName: chat.name,
-                                  ));
-                            },
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-                            leading: CircleAvatar(
-                              radius: 20,
-                              backgroundColor: AppColors.primary1,
-                              child: Text(
-                                chat.name.isNotEmpty ? chat.name[0].toUpperCase() : 'C',
-                                style: TextStyle(
-                                  color: AppColors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            title: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    chat.name,
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                Text(
-                                  chatController.formatMessageTime(chat.lastActivity),
-                                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                                ),
-                              ],
-                            ),
-                            subtitle: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    lastMessage?.content ?? 'No messages yet',
-                                    style: const TextStyle(color: Colors.grey, fontSize: 13),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                if (unreadCount > 0)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    margin: const EdgeInsets.only(left: 8),
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.notification,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Text(
-                                      "$unreadCount",
-                                      style: const TextStyle(color: Colors.white, fontSize: 12),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          );
-                        },
-                      );
-                    }),
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        // Group Chats Tab
+                        _buildChatList(isGroupChat: true),
+                        // Direct Messages Tab
+                        _buildChatList(isGroupChat: false),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -174,6 +98,178 @@ class MessagesScreen extends StatelessWidget {
           ),
           // Debug overlay - only show in debug mode
           if (kDebugMode) const DebugOverlay(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChatList({required bool isGroupChat}) {
+    return Obx(() {
+      if (chatController.isLoading) {
+        return Center(
+          child: CircularProgressIndicator(
+            color: AppColors.primary1,
+          ),
+        );
+      }
+
+      final chats = isGroupChat ? chatController.groupChats : chatController.privateChats;
+
+      if (chats.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isGroupChat ? Icons.group_outlined : Icons.chat_bubble_outline,
+                size: 64,
+                color: AppColors.grey,
+              ),
+              AppDimens.sizebox10,
+              Text(
+                isGroupChat ? 'No group chats yet' : 'No direct messages yet',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: AppColors.grey,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              AppDimens.sizebox5,
+              Text(
+                isGroupChat
+                    ? 'Book a tour to join group chats'
+                    : 'Start a conversation with other travelers',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.grey,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        );
+      }
+
+      return ListView.separated(
+        padding: const EdgeInsets.only(top: 10, bottom: 10),
+        itemCount: chats.length,
+        separatorBuilder: (context, index) => const Divider(
+          thickness: 0.5,
+        ),
+        itemBuilder: (context, index) {
+          final chat = chats[index];
+          return _buildChatTile(chat, isGroupChat);
+        },
+      );
+    });
+  }
+
+  Widget _buildChatTile(Chat chat, bool isGroupChat) {
+    final lastMessage = chat.lastMessage;
+    final unreadCount = chatController.getUnreadCount(chat.id!);
+
+    return ListTile(
+      onTap: () {
+        chatController.setCurrentChat(chat);
+        Get.to(() => InChat(
+              chatId: chat.id!,
+              chatName: chat.name,
+            ));
+      },
+      contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+      leading: Stack(
+        children: [
+          CircleAvatar(
+            radius: 24,
+            backgroundColor: isGroupChat ? AppColors.primary1 : Colors.blue,
+            child: isGroupChat
+                ? const Icon(Icons.group, color: Colors.white, size: 24)
+                : Text(
+                    chat.name.isNotEmpty ? chat.name[0].toUpperCase() : 'U',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+          ),
+          if (!isGroupChat)
+            Positioned(
+              right: 0,
+              bottom: 0,
+              child: Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: Colors.green,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+              ),
+            ),
+        ],
+      ),
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  chat.name,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (isGroupChat && chat.startDate != null)
+                  Text(
+                    'Departure: ${DateFormat('MMM d, yyyy').format(chat.startDate!)}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.primary1,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Text(
+            chatController.formatMessageTime(chat.lastActivity),
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+        ],
+      ),
+      subtitle: Row(
+        children: [
+          if (isGroupChat)
+            Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: Icon(
+                Icons.people_outline,
+                size: 14,
+                color: Colors.grey,
+              ),
+            ),
+          Expanded(
+            child: Text(
+              lastMessage?.content ?? 'No messages yet',
+              style: const TextStyle(color: Colors.grey, fontSize: 13),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (unreadCount > 0)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              margin: const EdgeInsets.only(left: 8),
+              decoration: const BoxDecoration(
+                color: AppColors.notification,
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                "$unreadCount",
+                style: const TextStyle(color: Colors.white, fontSize: 12),
+              ),
+            ),
         ],
       ),
     );

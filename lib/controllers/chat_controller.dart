@@ -3,6 +3,7 @@ import '../models/chat_models.dart';
 import '../services/chat_service.dart';
 import '../services/websocket_service.dart';
 import '../config/api_config.dart';
+import '../screens/chat/chat.dart';
 import 'auth_controller.dart';
 
 class ChatController extends GetxController {
@@ -35,7 +36,7 @@ class ChatController extends GetxController {
     _setAuthToken();
 
     // Don't connect to WebSocket automatically - connect only when needed
-    // _webSocketService.connect(ApiConfig.currentWebsocketUrl, 'current_user');
+    // _webSocketService.connect(ApiConfig.wsUrl, 'current_user');
   }
 
   // Set auth token from AuthController
@@ -57,7 +58,7 @@ class ChatController extends GetxController {
       if (authController.isLoggedIn && authController.userData.isNotEmpty) {
         final userId = authController.userData['_id'] ?? authController.userData['id'];
         if (userId != null) {
-          _webSocketService.connect(ApiConfig.currentWebsocketUrl, userId.toString());
+          _webSocketService.connect(ApiConfig.wsUrl, userId.toString());
         }
       }
     } catch (e) {
@@ -68,7 +69,7 @@ class ChatController extends GetxController {
   // Test API connection
   Future<void> testApiConnection() async {
     try {
-      print('Testing API connection to: ${ApiConfig.currentApiBaseUrl}');
+      print('Testing API connection to: ${ApiConfig.baseUrl}');
       _setAuthToken();
 
       // Test with a simple endpoint
@@ -88,7 +89,10 @@ class ChatController extends GetxController {
   }
 
   // Chat Management Methods
-  Future<void> loadUserChats() async {
+
+  /// Load user's chats with optional filtering by chat type
+  /// [chatType] - 'group' for tour group chats, 'private' for 1-1 chats, null for all
+  Future<void> loadUserChats({String? chatType}) async {
     try {
       _isLoading.value = true;
       _errorMessage.value = '';
@@ -96,10 +100,10 @@ class ChatController extends GetxController {
       // Ensure auth token is set before making API call
       _setAuthToken();
 
-      print('Loading user chats from: ${ApiConfig.getUserChats}');
+      print('Loading user chats from: ${ApiConfig.chat}/user (type: ${chatType ?? 'all'})');
       print('Auth token set: ${_chatService.authToken != null}');
 
-      final chats = await _chatService.getUserChats();
+      final chats = await _chatService.getUserChats(chatType: chatType);
       _chats.assignAll(chats);
 
       print('Successfully loaded ${chats.length} chats');
@@ -112,7 +116,52 @@ class ChatController extends GetxController {
     }
   }
 
-  Future<void> loadChatByTourId(String tourId) async {
+  /// Load group chats only (tour chats)
+  Future<void> loadGroupChats() async {
+    return loadUserChats(chatType: 'group');
+  }
+
+  /// Load private chats only (1-1 chats)
+  Future<void> loadPrivateChats() async {
+    return loadUserChats(chatType: 'private');
+  }
+
+  /// Create or get private chat with another user
+  Future<Chat?> createPrivateChat(String targetUserId) async {
+    try {
+      _isLoading.value = true;
+      _errorMessage.value = '';
+
+      _setAuthToken();
+
+      final chat = await _chatService.createPrivateChat(targetUserId);
+
+      // Add to chats list if not already there
+      if (!_chats.any((c) => c.id == chat.id)) {
+        _chats.insert(0, chat);
+      }
+
+      return chat;
+    } catch (e) {
+      _errorMessage.value = e.toString();
+      print('Error creating private chat: $e');
+      Get.snackbar('Error', 'Failed to create chat: $e');
+      return null;
+    } finally {
+      _isLoading.value = false;
+    }
+  }
+
+  /// Open private chat with a user (creates if doesn't exist)
+  Future<void> openPrivateChat(String targetUserId, String targetUserName) async {
+    final chat = await createPrivateChat(targetUserId);
+    if (chat != null) {
+      setCurrentChat(chat);
+      Get.to(() => InChat(chatId: chat.id!, chatName: targetUserName));
+    }
+  }
+
+  Future<void> loadChatByTourId(String tourId, {DateTime? startDate}) async {
     try {
       _isLoading.value = true;
       _errorMessage.value = '';
@@ -120,7 +169,7 @@ class ChatController extends GetxController {
       // Ensure auth token is set before making API call
       _setAuthToken();
 
-      final chat = await _chatService.getChatByTourId(tourId);
+      final chat = await _chatService.getChatByTourId(tourId, startDate: startDate);
       _currentChat.value = chat;
     } catch (e) {
       _errorMessage.value = e.toString();
@@ -129,6 +178,10 @@ class ChatController extends GetxController {
       _isLoading.value = false;
     }
   }
+
+  // Get filtered chats by type from current list
+  List<Chat> get groupChats => _chats.where((c) => c.isGroupChat).toList();
+  List<Chat> get privateChats => _chats.where((c) => c.isPrivateChat).toList();
 
   // Message Management Methods
   Future<void> loadMessages(String chatId, {int page = 1, int limit = 50}) async {

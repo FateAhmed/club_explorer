@@ -15,10 +15,17 @@ class ChatService {
 
   // Chat Management APIs
 
-  Future<List<Chat>> getUserChats() async {
+  /// Get user's chats with optional filtering by chat type
+  /// [chatType] - 'group' for tour group chats, 'private' for 1-1 chats, null for all
+  Future<List<Chat>> getUserChats({String? chatType}) async {
     try {
+      String url = '${ApiConfig.chat}/user';
+      if (chatType != null) {
+        url += '?chatType=$chatType';
+      }
+
       final response = await http.get(
-        Uri.parse(ApiConfig.getUserChats),
+        Uri.parse(url),
         headers: _headers,
       );
 
@@ -33,10 +40,67 @@ class ChatService {
     }
   }
 
-  Future<Chat> getChatByTourId(String tourId) async {
+  /// Get group chats only
+  Future<List<Chat>> getGroupChats() async {
+    return getUserChats(chatType: 'group');
+  }
+
+  /// Get private chats only
+  Future<List<Chat>> getPrivateChats() async {
+    return getUserChats(chatType: 'private');
+  }
+
+  /// Create or get private chat with another user
+  Future<Chat> createPrivateChat(String targetUserId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConfig.chat}/private'),
+        headers: _headers,
+        body: jsonEncode({'targetUserId': targetUserId}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return Chat.fromJson(data['chat']);
+      } else {
+        throw Exception('Failed to create private chat: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error creating private chat: $e');
+    }
+  }
+
+  /// Get private chat with a specific user (if exists)
+  Future<Chat?> getPrivateChatWithUser(String targetUserId) async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConfig.getChatByTourId}/$tourId'),
+        Uri.parse('${ApiConfig.chat}/private/$targetUserId'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return Chat.fromJson(data['chat']);
+      } else if (response.statusCode == 404) {
+        return null; // No chat exists with this user
+      } else {
+        throw Exception('Failed to fetch private chat: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching private chat: $e');
+    }
+  }
+
+  /// Get chat by tour ID with optional start date filter
+  Future<Chat> getChatByTourId(String tourId, {DateTime? startDate}) async {
+    try {
+      String url = '${ApiConfig.chat}/tour/$tourId';
+      if (startDate != null) {
+        url += '?startDate=${startDate.toIso8601String()}';
+      }
+
+      final response = await http.get(
+        Uri.parse(url),
         headers: _headers,
       );
 
@@ -61,7 +125,7 @@ class ChatService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('${ApiConfig.sendMessage}/$chatId/messages'),
+        Uri.parse('${ApiConfig.chat}/$chatId/messages'),
         headers: _headers,
         body: jsonEncode({
           'content': content,
@@ -89,7 +153,7 @@ class ChatService {
     MessageType? messageType,
   }) async {
     try {
-      String url = '${ApiConfig.getChatMessages}/$chatId/messages?page=$page&limit=$limit';
+      String url = '${ApiConfig.chat}/$chatId/messages?page=$page&limit=$limit';
       if (messageType != null) {
         url += '&messageType=${messageType.toString().split('.').last}';
       }
@@ -116,7 +180,7 @@ class ChatService {
   }) async {
     try {
       final response = await http.put(
-        Uri.parse('${ApiConfig.updateMessage}/$messageId'),
+        Uri.parse('${ApiConfig.chat}/messages/$messageId'),
         headers: _headers,
         body: jsonEncode({
           'content': content,
@@ -137,7 +201,7 @@ class ChatService {
   Future<void> deleteMessage(String messageId) async {
     try {
       final response = await http.delete(
-        Uri.parse('${ApiConfig.deleteMessage}/$messageId'),
+        Uri.parse('${ApiConfig.chat}/messages/$messageId'),
         headers: _headers,
       );
 
@@ -152,7 +216,7 @@ class ChatService {
   Future<void> markMessagesAsRead(String chatId) async {
     try {
       final response = await http.put(
-        Uri.parse('${ApiConfig.markMessagesAsRead}/$chatId/read'),
+        Uri.parse('${ApiConfig.chat}/$chatId/read'),
         headers: _headers,
       );
 

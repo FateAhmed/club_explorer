@@ -73,7 +73,9 @@ class ChatMessage {
 
 class Chat {
   final String? id;
-  final String tourId;
+  final ChatType chatType;
+  final String? tourId;  // Optional - only for group tour chats
+  final DateTime? startDate;  // Optional - for tour group chats, identifies departure
   final String name;
   final String? description;
   final List<ChatParticipant> participants;
@@ -87,7 +89,9 @@ class Chat {
 
   Chat({
     this.id,
-    required this.tourId,
+    required this.chatType,
+    this.tourId,
+    this.startDate,
     required this.name,
     this.description,
     required this.participants,
@@ -100,17 +104,27 @@ class Chat {
     required this.updatedAt,
   });
 
+  // Helper to check if chat is a group chat
+  bool get isGroupChat => chatType == ChatType.GROUP;
+
+  // Helper to check if chat is a private chat
+  bool get isPrivateChat => chatType == ChatType.PRIVATE;
+
   factory Chat.fromJson(Map<String, dynamic> json) {
     return Chat(
       id: json['_id'] ?? json['id'],
-      tourId: json['tourId'] ?? '',
+      chatType: _parseChatType(json['chatType']),
+      tourId: json['tourId'],
+      startDate: json['startDate'] != null ? DateTime.parse(json['startDate']) : null,
       name: json['name'] ?? '',
       description: json['description'],
       participants: json['participants'] != null
           ? (json['participants'] as List).map((e) => ChatParticipant.fromJson(e)).toList()
           : [],
       status: _parseChatStatus(json['status']),
-      lastMessage: json['lastMessage'] != null ? ChatMessage.fromJson(json['lastMessage']) : null,
+      lastMessage: json['lastMessage'] != null && json['lastMessage'] is Map
+          ? ChatMessage.fromJson(json['lastMessage'])
+          : null,
       lastActivity: DateTime.parse(json['lastActivity']),
       settings: ChatSettings.fromJson(json['settings'] ?? {}),
       metadata: json['metadata'],
@@ -258,6 +272,11 @@ enum MessageType {
   EVENT,
 }
 
+enum ChatType {
+  GROUP,
+  PRIVATE,
+}
+
 enum ChatStatus {
   ACTIVE,
   INACTIVE,
@@ -353,6 +372,19 @@ String _messageStatusToString(MessageStatus status) {
       return 'read';
     case MessageStatus.FAILED:
       return 'failed';
+  }
+}
+
+ChatType _parseChatType(dynamic value) {
+  if (value == null) return ChatType.GROUP;
+  final str = value.toString().toLowerCase();
+  switch (str) {
+    case 'group':
+      return ChatType.GROUP;
+    case 'private':
+      return ChatType.PRIVATE;
+    default:
+      return ChatType.GROUP;
   }
 }
 
