@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -68,6 +69,15 @@ class AuthController extends GetxController {
           // Update user data with fresh data from server
           user.assignAll(data['data']);
           await _saveUserData();
+
+          // Sync profile image URL from server
+          final serverProfileImage = data['data']['profileImage'];
+          if (serverProfileImage != null && serverProfileImage.toString().isNotEmpty) {
+            profileImage.value = serverProfileImage;
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString(_profileImageKey, serverProfileImage);
+          }
+
           return true;
         }
       }
@@ -487,7 +497,110 @@ class AuthController extends GetxController {
     errorMessage.value = '';
   }
 
-  /// Update profile image path (stored locally)
+  /// Upload profile image to S3 and update user profile
+  /// Returns the uploaded image URL on success, null on failure
+  Future<String?> uploadAndSaveProfileImage(String localImagePath) async {
+    try {
+      isLoading.value = true;
+      errorMessage.value = '';
+
+      // Upload image to S3
+      final file = File(localImagePath);
+      if (!file.existsSync()) {
+        errorMessage.value = 'Image file not found';
+        return null;
+      }
+
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('${ApiConfig.upload}/single'),
+      );
+
+      request.headers['Authorization'] = 'Bearer ${accessToken.value}';
+      request.fields['folder'] = 'profile-images';
+      request.files.add(await http.MultipartFile.fromPath('file', localImagePath));
+
+      final streamedResponse = await request.send().timeout(const Duration(seconds: 60));
+      final response = await http.Response.fromStream(streamedResponse);
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        final imageUrl = data['data']['url'] as String;
+
+        // Update profile with the new image URL
+        final profileUpdateResponse = await http.put(
+          Uri.parse('${ApiConfig.users}/profile'),
+          headers: _authHeaders,
+          body: jsonEncode({'profileImage': imageUrl}),
+        ).timeout(const Duration(seconds: 30));
+
+        final profileData = jsonDecode(profileUpdateResponse.body);
+
+        if (profileUpdateResponse.statusCode == 200 && profileData['success'] == true) {
+          // Update local state
+          user['profileImage'] = imageUrl;
+          profileImage.value = imageUrl;
+          await _saveUserData();
+
+          // Save URL to SharedPreferences (replacing local path)
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(_profileImageKey, imageUrl);
+
+          return imageUrl;
+        } else {
+          errorMessage.value = profileData['message'] ?? 'Failed to update profile';
+          return null;
+        }
+      } else {
+        errorMessage.value = data['message'] ?? 'Failed to upload image';
+        return null;
+      }
+    } catch (e) {
+      print('Error uploading profile image: $e');
+      errorMessage.value = 'Failed to upload image. Please try again.';
+      return null;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Remove profile image from server
+  Future<bool> removeProfileImage() async {
+    try {
+      isLoading.value = true;
+      errorMessage.value = '';
+
+      final response = await http.put(
+        Uri.parse('${ApiConfig.users}/profile'),
+        headers: _authHeaders,
+        body: jsonEncode({'profileImage': null}),
+      ).timeout(const Duration(seconds: 30));
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        user['profileImage'] = null;
+        profileImage.value = '';
+        await _saveUserData();
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove(_profileImageKey);
+        return true;
+      } else {
+        errorMessage.value = data['message'] ?? 'Failed to remove image';
+        return false;
+      }
+    } catch (e) {
+      print('Error removing profile image: $e');
+      errorMessage.value = 'Failed to remove image. Please try again.';
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Update profile image path (for backward compatibility - stores locally)
+  /// Prefer using uploadAndSaveProfileImage for proper server sync
   Future<void> updateProfileImage(String imagePath) async {
     profileImage.value = imagePath;
     final prefs = await SharedPreferences.getInstance();

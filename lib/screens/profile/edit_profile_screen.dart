@@ -34,6 +34,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   File? _selectedImage;
 
+  String? _existingImageUrl;
+
   @override
   void initState() {
     super.initState();
@@ -48,8 +50,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     // Load existing profile image if available
     final existingImage = authController.userProfileImage;
-    if (existingImage.isNotEmpty && File(existingImage).existsSync()) {
-      _selectedImage = File(existingImage);
+    if (existingImage.isNotEmpty) {
+      // Check if it's a URL (from server) or local file path
+      if (existingImage.startsWith('http')) {
+        _existingImageUrl = existingImage;
+      } else if (File(existingImage).existsSync()) {
+        _selectedImage = File(existingImage);
+      }
     }
   }
 
@@ -158,7 +165,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   _pickImage(ImageSource.gallery);
                 },
               ),
-              if (_selectedImage != null || authController.userProfileImage.isNotEmpty)
+              if (_selectedImage != null || _existingImageUrl != null || authController.userProfileImage.isNotEmpty)
                 ListTile(
                   leading: Container(
                     padding: const EdgeInsets.all(10),
@@ -173,12 +180,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                   title: const Text('Remove Photo'),
                   subtitle: const Text('Use initials instead'),
-                  onTap: () {
+                  onTap: () async {
                     Navigator.pop(context);
                     setState(() {
                       _selectedImage = null;
+                      _existingImageUrl = null;
                     });
-                    authController.updateProfileImage('');
+                    // Remove from server if it was already uploaded
+                    await authController.removeProfileImage();
                   },
                 ),
             ],
@@ -193,9 +202,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     LoadingDialog.show(context);
 
-    // Save image path if selected
-    if (_selectedImage != null) {
-      await authController.updateProfileImage(_selectedImage!.path);
+    // Upload new image to S3 if a new image was selected
+    if (_selectedImage != null && _selectedImage!.path != _existingImageUrl) {
+      final imageUrl = await authController.uploadAndSaveProfileImage(_selectedImage!.path);
+      if (imageUrl != null) {
+        _existingImageUrl = imageUrl;
+        _selectedImage = null;
+      } else {
+        // Image upload failed
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(authController.errorMessage.value),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
     }
 
     final success = await authController.updateProfile(
@@ -237,14 +262,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Widget _buildAvatar() {
+    ImageProvider? avatarImage;
+    if (_selectedImage != null) {
+      avatarImage = FileImage(_selectedImage!);
+    } else if (_existingImageUrl != null && _existingImageUrl!.isNotEmpty) {
+      avatarImage = NetworkImage(_existingImageUrl!);
+    }
+
     return Stack(
       children: [
         GestureDetector(
           onTap: _showImagePickerOptions,
-          child: _selectedImage != null
+          child: avatarImage != null
               ? CircleAvatar(
                   radius: 50,
-                  backgroundImage: FileImage(_selectedImage!),
+                  backgroundImage: avatarImage,
                 )
               : CircleAvatar(
                   radius: 50,

@@ -30,12 +30,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildAvatar() {
     final imagePath = authController.userProfileImage;
-    final hasImage = imagePath.isNotEmpty && File(imagePath).existsSync();
+    ImageProvider? avatarImage;
 
-    if (hasImage) {
+    if (imagePath.isNotEmpty) {
+      // Check if it's a URL (from server) or local file path
+      if (imagePath.startsWith('http')) {
+        avatarImage = NetworkImage(imagePath);
+      } else if (File(imagePath).existsSync()) {
+        avatarImage = FileImage(File(imagePath));
+      }
+    }
+
+    if (avatarImage != null) {
       return CircleAvatar(
         radius: 50,
-        backgroundImage: FileImage(File(imagePath)),
+        backgroundImage: avatarImage,
       );
     }
 
