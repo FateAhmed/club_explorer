@@ -42,3 +42,57 @@ android {
 flutter {
     source = "../.."
 }
+
+// ============================================================================
+// Environment Validation Hook
+// Prevents shipping development credentials to production
+// ============================================================================
+task validateEnvironment(type: Exec) {
+    description = 'Validates environment configuration before release build'
+    group = 'verification'
+
+    // Get the project root directory (go up two levels from android/app)
+    def projectRoot = project.rootDir.parentFile.parentFile
+
+    // Only run for release builds
+    onlyIf {
+        gradle.startParameter.taskNames.any {
+            it.toLowerCase().contains('release') ||
+            it.toLowerCase().contains('bundle')
+        }
+    }
+
+    workingDir projectRoot
+
+    // Run the Dart validator
+    commandLine 'dart', 'run', 'tool/env_validator.dart'
+
+    // Configure execution behavior
+    ignoreExitValue = false
+    standardOutput = System.out
+    errorOutput = System.err
+
+    doFirst {
+        println ""
+        println "╔═══════════════════════════════════════════════════════════════╗"
+        println "║                 Running Environment Validation                ║"
+        println "╚═══════════════════════════════════════════════════════════════╝"
+        println ""
+    }
+
+    doLast {
+        println ""
+        println "✅ Environment validation completed successfully"
+        println ""
+    }
+}
+
+// Hook the validation into the build process
+// This ensures it runs automatically before any release build
+tasks.whenTaskAdded { task ->
+    if (task.name == 'assembleRelease' ||
+        task.name == 'bundleRelease' ||
+        task.name.startsWith('assemble') && task.name.endsWith('Release')) {
+        task.dependsOn validateEnvironment
+    }
+}
