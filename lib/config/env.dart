@@ -5,7 +5,7 @@ class Env {
   factory Env() => _instance;
   Env._internal();
 
-  Environment _environment = Environment.development;
+  Environment _environment = Environment.production;
 
   // URLs per environment
   static const _config = {
