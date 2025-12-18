@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:explorify/config/api_config.dart';
+import 'package:explorify/controllers/auth_controller.dart';
 import 'package:explorify/models/tour.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -14,8 +15,12 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    getTours();
-    getBookedTours();
+    _loadData();
+  }
+
+  _loadData() async {
+    await getTours();
+    await getBookedTours();
   }
 
   getTours() async {
@@ -42,12 +47,50 @@ class HomeController extends GetxController {
 
   getBookedTours() async {
     try {
-      // For now, we'll simulate booked tours by taking first 2 from all tours
-      // In real app, this would be a separate API call to get user's booked tours
-      await Future.delayed(Duration(milliseconds: 500)); // Simulate API delay
-      if (allTours.isNotEmpty) {
-        bookedTours.value = allTours.take(2).toList();
+      // Get auth controller to access token
+      final authController = Get.find<AuthController>();
+
+      // Skip if user is not logged in
+      if (!authController.isLoggedIn) {
+        debugPrint('User not logged in, skipping booked tours');
+        return;
+      }
+
+      var request = http.Request('GET', Uri.parse('${ApiConfig.tours}/booking/my'));
+      request.headers['Authorization'] = 'Bearer ${authController.token}';
+      request.headers['Content-Type'] = 'application/json';
+
+      http.StreamedResponse response = await request.send();
+      debugPrint('Bookings response: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        var data = await response.stream.bytesToString();
+        debugPrint('Bookings data: $data');
+
+        var jsonData = jsonDecode(data);
+        var bookings = jsonData['bookings'] as List;
+        debugPrint('Found ${bookings.length} bookings');
+
+        // Extract tour IDs from bookings
+        List<String> bookedTourIds = bookings
+            .map((booking) => booking['tourId']?.toString() ?? '')
+            .where((id) => id.isNotEmpty)
+            .toList();
+
+        // Match bookings with tours from allTours
+        bookedTours.value = allTours
+            .where((tour) => bookedTourIds.contains(tour.id))
+            .toList();
+
         debugPrint('Booked tours loaded: ${bookedTours.length}');
+
+        // If we have bookings but no matching tours in allTours, fetch tour details
+        if (bookedTourIds.isNotEmpty && bookedTours.isEmpty) {
+          debugPrint('No matching tours found in allTours, they may still be loading');
+        }
+      } else {
+        debugPrint('Error loading bookings: ${response.statusCode}');
+        debugPrint(await response.stream.bytesToString());
       }
     } catch (e) {
       debugPrint('Exception loading booked tours: $e');
