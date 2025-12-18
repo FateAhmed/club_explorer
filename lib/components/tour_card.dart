@@ -222,7 +222,8 @@ class TourCard extends StatelessWidget {
                       const SizedBox(height: 12),
                       ThemeButton(
                         hights: 40,
-                        fontWeight: FontWeight.w500,
+                        fontsize: 16,
+                        fontWeight: FontWeight.w400,
                         text: 'View Tour Route',
                         onpress: () {
                           final tourPoints = tour.tourPoints ?? [];

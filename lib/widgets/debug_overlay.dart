@@ -124,11 +124,8 @@ class _DebugOverlayState extends State<DebugOverlay> {
         _buildInfoRow('API Base URL', ApiConfig.baseUrl),
         _buildInfoRow('WebSocket URL', ApiConfig.wsUrl),
         _buildInfoRow('WebSocket Status', webSocketService.isConnected ? 'Connected' : 'Disconnected'),
-        _buildInfoRow(
-            'Auth Token',
-            chatController.chatService.authToken != null
-                ? '${chatController.chatService.authToken!.substring(0, 20)}...'
-                : 'Not Set'),
+        _buildInfoRow('Auth Token',
+            chatController.currentUserId != null ? 'Set (User: ${chatController.currentUserId})' : 'Not Set'),
         _buildInfoRow('Chats Count', '${chatController.chats.length}'),
         _buildInfoRow('Messages Count', '${chatController.messages.length}'),
         _buildInfoRow('Is Loading', chatController.isLoading ? 'Yes' : 'No'),

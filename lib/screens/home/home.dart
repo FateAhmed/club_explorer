@@ -39,12 +39,21 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildAvatar() {
     final imagePath = authController.userProfileImage;
-    final hasImage = imagePath.isNotEmpty && File(imagePath).existsSync();
+    ImageProvider? avatarImage;
 
-    if (hasImage) {
+    if (imagePath.isNotEmpty) {
+      // Check if it's a URL (from server) or local file path
+      if (imagePath.startsWith('http')) {
+        avatarImage = NetworkImage(imagePath);
+      } else if (File(imagePath).existsSync()) {
+        avatarImage = FileImage(File(imagePath));
+      }
+    }
+
+    if (avatarImage != null) {
       return CircleAvatar(
         radius: 20,
-        backgroundImage: FileImage(File(imagePath)),
+        backgroundImage: avatarImage,
       );
     }
 
@@ -83,9 +92,7 @@ class _HomePageState extends State<HomePage> {
                           Obx(() => _buildAvatar()),
                           AppDimens.sizebox10,
                           Obx(() => Text(
-                                authController.userName.isNotEmpty
-                                    ? authController.userName
-                                    : 'User',
+                                authController.userName.isNotEmpty ? authController.userName : 'User',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -124,25 +131,40 @@ class _HomePageState extends State<HomePage> {
                 GestureDetector(
                   onTap: () => Get.to(() => const SearchScreen()),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
-                      color: AppColors.grey100,
-                      borderRadius: BorderRadius.circular(12),
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(color: AppColors.grey300),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Row(
                       children: [
-                        Icon(CupertinoIcons.search, color: AppColors.grey),
+                        Icon(CupertinoIcons.search, color: AppColors.grey, size: 20),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             'Search tours...',
                             style: TextStyle(
                               color: AppColors.grey,
-                              fontSize: 16,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
-                        Icon(CupertinoIcons.slider_horizontal_3, color: AppColors.grey),
+                        Container(
+                          height: 24,
+                          width: 1,
+                          color: AppColors.grey300,
+                          margin: const EdgeInsets.only(right: 12),
+                        ),
+                        Icon(CupertinoIcons.slider_horizontal_3, color: AppColors.grey, size: 20),
                       ],
                     ),
                   ),
@@ -210,7 +232,7 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ),
                 ),
-                AppDimens.sizebox20,
+                AppDimens.sizebox10,
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [

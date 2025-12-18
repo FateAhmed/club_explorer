@@ -12,7 +12,7 @@ class Env {
     Environment.development: {
       'apiUrl': 'http://localhost:7043',
       'wsUrl': 'ws://localhost:7043',
-      'webUrl': 'http://localhost:3002',
+      'webUrl': 'http://localhost:3000',
     },
     Environment.staging: {
       'apiUrl': 'https://club-explorer.ahmadt.com',

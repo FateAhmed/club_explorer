@@ -47,7 +47,7 @@ class MainWrapper extends StatelessWidget {
                 ),
                 page: 1,
                 context,
-                label: "Message",
+                label: "Chats",
               ),
               _bottomAppBarItem(
                 icon: Icon(

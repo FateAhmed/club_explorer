@@ -19,10 +19,7 @@ class BookingSuccessScreen extends StatelessWidget {
   });
 
   String _formatDate(DateTime date) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
@@ -226,9 +223,7 @@ class BookingSuccessScreen extends StatelessWidget {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(
-                              Platform.isIOS
-                                  ? CupertinoIcons.device_phone_portrait
-                                  : Icons.phone_android,
+                              Platform.isIOS ? CupertinoIcons.device_phone_portrait : Icons.phone_android,
                               color: Colors.white,
                               size: 28,
                             ),
@@ -277,16 +272,12 @@ class BookingSuccessScreen extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
-                                Platform.isIOS
-                                    ? CupertinoIcons.app_badge
-                                    : Icons.get_app,
+                                Platform.isIOS ? CupertinoIcons.app_badge : Icons.get_app,
                                 size: 20,
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                Platform.isIOS
-                                    ? 'Download on App Store'
-                                    : 'Get it on Google Play',
+                                Platform.isIOS ? 'Download on App Store' : 'Get it on Google Play',
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
