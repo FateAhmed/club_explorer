@@ -2,6 +2,7 @@ class ChatMessage {
   final String? id;
   final String chatId;
   final String senderId;
+  final String? senderName;
   final String content;
   final MessageType messageType;
   final List<MessageAttachment>? attachments;
@@ -15,10 +16,15 @@ class ChatMessage {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  // For optimistic updates and deduplication
+  final String? localId;
+  final bool isLocalOnly;
+
   ChatMessage({
     this.id,
     required this.chatId,
     required this.senderId,
+    this.senderName,
     required this.content,
     required this.messageType,
     this.attachments,
@@ -31,13 +37,63 @@ class ChatMessage {
     this.metadata,
     required this.createdAt,
     required this.updatedAt,
+    this.localId,
+    this.isLocalOnly = false,
   });
+
+  /// Unique key for deduplication
+  /// Uses server ID if available, otherwise uses localId
+  String get deduplicationKey => id ?? localId ?? '${chatId}_${senderId}_${createdAt.millisecondsSinceEpoch}';
+
+  /// Creates a copy of this message with updated fields
+  ChatMessage copyWith({
+    String? id,
+    String? chatId,
+    String? senderId,
+    String? senderName,
+    String? content,
+    MessageType? messageType,
+    List<MessageAttachment>? attachments,
+    String? replyTo,
+    MessageStatus? status,
+    DateTime? editedAt,
+    DateTime? deletedAt,
+    bool? isEdited,
+    bool? isDeleted,
+    Map<String, dynamic>? metadata,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? localId,
+    bool? isLocalOnly,
+  }) {
+    return ChatMessage(
+      id: id ?? this.id,
+      chatId: chatId ?? this.chatId,
+      senderId: senderId ?? this.senderId,
+      senderName: senderName ?? this.senderName,
+      content: content ?? this.content,
+      messageType: messageType ?? this.messageType,
+      attachments: attachments ?? this.attachments,
+      replyTo: replyTo ?? this.replyTo,
+      status: status ?? this.status,
+      editedAt: editedAt ?? this.editedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+      isEdited: isEdited ?? this.isEdited,
+      isDeleted: isDeleted ?? this.isDeleted,
+      metadata: metadata ?? this.metadata,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      localId: localId ?? this.localId,
+      isLocalOnly: isLocalOnly ?? this.isLocalOnly,
+    );
+  }
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
     return ChatMessage(
       id: json['_id'] ?? json['id'],
       chatId: json['chatId'] ?? '',
       senderId: json['senderId'] ?? '',
+      senderName: json['senderName'],
       content: json['content'] ?? '',
       messageType: _parseMessageType(json['messageType']),
       attachments: json['attachments'] != null
@@ -50,8 +106,10 @@ class ChatMessage {
       isEdited: json['isEdited'] ?? false,
       isDeleted: json['isDeleted'] ?? false,
       metadata: json['metadata'],
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
+      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime.now(),
+      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : DateTime.now(),
+      localId: json['localId'],
+      isLocalOnly: false,
     );
   }
 
@@ -59,6 +117,7 @@ class ChatMessage {
     return {
       'chatId': chatId,
       'senderId': senderId,
+      'senderName': senderName,
       'content': content,
       'messageType': _messageTypeToString(messageType),
       'attachments': attachments?.map((e) => e.toJson()).toList(),
@@ -67,6 +126,7 @@ class ChatMessage {
       'isEdited': isEdited,
       'isDeleted': isDeleted,
       'metadata': metadata,
+      if (localId != null) 'localId': localId,
     };
   }
 }
@@ -136,27 +196,52 @@ class Chat {
 
 class ChatParticipant {
   final String userId;
+  final String? name;
+  final String? email;
+  final String? profileImage;
   final ChatRole role;
   final DateTime joinedAt;
   final DateTime? lastSeen;
+  final DateTime? lastReadAt;
+  final int unreadCount;
   final bool isActive;
   final Map<String, dynamic>? metadata;
 
   ChatParticipant({
     required this.userId,
+    this.name,
+    this.email,
+    this.profileImage,
     required this.role,
     required this.joinedAt,
     this.lastSeen,
+    this.lastReadAt,
+    this.unreadCount = 0,
     required this.isActive,
     this.metadata,
   });
 
+  /// Get display name: name > email > userId
+  String get displayName {
+    if (name != null && name!.isNotEmpty) return name!;
+    if (email != null && email!.isNotEmpty) return email!;
+    return 'User ${userId.substring(0, 8)}...';
+  }
+
+  /// Check if participant has a profile image
+  bool get hasProfileImage => profileImage != null && profileImage!.isNotEmpty;
+
   factory ChatParticipant.fromJson(Map<String, dynamic> json) {
     return ChatParticipant(
       userId: json['userId'] ?? '',
+      name: json['name'],
+      email: json['email'],
+      profileImage: json['profileImage'],
       role: _parseChatRole(json['role']),
-      joinedAt: DateTime.parse(json['joinedAt']),
+      joinedAt: json['joinedAt'] != null ? DateTime.parse(json['joinedAt']) : DateTime.now(),
       lastSeen: json['lastSeen'] != null ? DateTime.parse(json['lastSeen']) : null,
+      lastReadAt: json['lastReadAt'] != null ? DateTime.parse(json['lastReadAt']) : null,
+      unreadCount: json['unreadCount'] ?? 0,
       isActive: json['isActive'] ?? true,
       metadata: json['metadata'],
     );

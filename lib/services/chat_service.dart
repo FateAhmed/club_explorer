@@ -129,7 +129,7 @@ class ChatService {
         headers: _headers,
         body: jsonEncode({
           'content': content,
-          'messageType': messageType.toString().split('.').last,
+          'messageType': messageType.toString().split('.').last.toLowerCase(),
           'attachments': attachments?.map((e) => e.toJson()).toList(),
           'replyTo': replyTo,
         }),
@@ -137,7 +137,7 @@ class ChatService {
 
       if (response.statusCode == 201) {
         final data = jsonDecode(response.body);
-        return ChatMessage.fromJson(data['message']);
+        return ChatMessage.fromJson(data['data']);
       } else {
         throw Exception('Failed to send message: ${response.body}');
       }
@@ -155,7 +155,7 @@ class ChatService {
     try {
       String url = '${ApiConfig.chat}/$chatId/messages?page=$page&limit=$limit';
       if (messageType != null) {
-        url += '&messageType=${messageType.toString().split('.').last}';
+        url += '&messageType=${messageType.toString().split('.').last.toLowerCase()}';
       }
 
       final response = await http.get(

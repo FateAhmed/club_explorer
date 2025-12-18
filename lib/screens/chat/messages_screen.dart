@@ -4,8 +4,6 @@ import 'package:explorify/utils/AppColors.dart';
 import 'package:explorify/utils/AppDimens.dart';
 import 'package:explorify/controllers/chat_controller.dart';
 import 'package:explorify/models/chat_models.dart';
-import 'package:explorify/widgets/debug_overlay.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter/cupertino.dart';
@@ -44,7 +42,7 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Messages'),
+        title: const Text('Chats'),
         centerTitle: true,
         backgroundColor: AppColors.grey50,
         bottom: TabBar(
@@ -54,7 +52,7 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
           unselectedLabelColor: AppColors.grey,
           tabs: const [
             Tab(text: 'Group Chats'),
-            Tab(text: 'Direct Messages'),
+            Tab(text: 'Private Chats'),
           ],
         ),
       ),
@@ -97,7 +95,7 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
             ),
           ),
           // Debug overlay - only show in debug mode
-          if (kDebugMode) const DebugOverlay(),
+          // if (kDebugMode) const DebugOverlay(),
         ],
       ),
     );
@@ -136,9 +134,7 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
               ),
               AppDimens.sizebox5,
               Text(
-                isGroupChat
-                    ? 'Book a tour to join group chats'
-                    : 'Start a conversation with other travelers',
+                isGroupChat ? 'Book a tour to join group chats' : 'Start a conversation with other travelers',
                 style: TextStyle(
                   fontSize: 14,
                   color: AppColors.grey,
@@ -166,7 +162,6 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
 
   Widget _buildChatTile(Chat chat, bool isGroupChat) {
     final lastMessage = chat.lastMessage;
-    final unreadCount = chatController.getUnreadCount(chat.id!);
 
     return ListTile(
       onTap: () {
@@ -210,7 +205,6 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
         ],
       ),
       title: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
             child: Column(
@@ -220,6 +214,7 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
                   chat.name,
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
                 if (isGroupChat && chat.startDate != null)
                   Text(
@@ -229,10 +224,13 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
                       color: AppColors.primary1,
                       fontWeight: FontWeight.w500,
                     ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
               ],
             ),
           ),
+          const SizedBox(width: 8),
           Text(
             chatController.formatMessageTime(chat.lastActivity),
             style: const TextStyle(fontSize: 12, color: Colors.grey),
@@ -257,19 +255,25 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          if (unreadCount > 0)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              margin: const EdgeInsets.only(left: 8),
-              decoration: const BoxDecoration(
-                color: AppColors.notification,
-                shape: BoxShape.circle,
-              ),
-              child: Text(
-                "$unreadCount",
-                style: const TextStyle(color: Colors.white, fontSize: 12),
-              ),
-            ),
+          // Wrap unread badge in Obx for reactive updates
+          Obx(() {
+            final unreadCount = chatController.getUnreadCount(chat.id!);
+            if (unreadCount > 0) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                margin: const EdgeInsets.only(left: 8),
+                decoration: const BoxDecoration(
+                  color: AppColors.notification,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  "$unreadCount",
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          }),
         ],
       ),
     );
