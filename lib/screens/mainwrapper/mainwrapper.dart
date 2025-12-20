@@ -1,4 +1,5 @@
 import 'package:explorify/screens/mainwrapper/main_wrapper_controller.dart';
+import 'package:explorify/controllers/chat_controller.dart';
 import 'package:explorify/utils/AppColors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -40,11 +41,7 @@ class MainWrapper extends StatelessWidget {
                 label: "Home",
               ),
               _bottomAppBarItem(
-                icon: Icon(
-                  CupertinoIcons.chat_bubble_text,
-                  color: _mainWrapperController.currentPage == 1 ? AppColors.primary1 : Colors.grey,
-                  size: 22,
-                ),
+                icon: _buildChatIconWithBadge(),
                 page: 1,
                 context,
                 label: "Chats",
@@ -63,6 +60,49 @@ class MainWrapper extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildChatIconWithBadge() {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Icon(
+          CupertinoIcons.chat_bubble_text,
+          color: _mainWrapperController.currentPage == 1 ? AppColors.primary1 : Colors.grey,
+          size: 22,
+        ),
+        if (Get.isRegistered<ChatController>())
+          GetX<ChatController>(
+            builder: (controller) {
+              final count = controller.totalUnreadCount;
+              if (count > 0) {
+                return Positioned(
+                  right: -8,
+                  top: -4,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                    child: Text(
+                      count > 99 ? '99+' : '$count',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+      ],
     );
   }
 

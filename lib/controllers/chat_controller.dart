@@ -76,7 +76,17 @@ class ChatController extends GetxController {
   List<Chat> get groupChats => _repository.groupChats;
   List<Chat> get privateChats => _repository.privateChats;
 
+  // Reactive unread counts for tab badges
+  int get groupChatsUnreadCount => _repository.groupChatsUnreadCount;
+  int get privateChatsUnreadCount => _repository.privateChatsUnreadCount;
+  RxMap<String, int> get unreadCountsMap => _repository.unreadCountsMap;
+
   // ============ CHAT MANAGEMENT ============
+
+  /// Create or get private chat with another user
+  Future<Chat?> createPrivateChat(String targetUserId) async {
+    return await _repository.createPrivateChat(targetUserId);
+  }
 
   /// Load all user chats
   Future<void> loadUserChats({String? chatType}) async {

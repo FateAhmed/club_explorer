@@ -53,6 +53,29 @@ class ChatRepository extends GetxService {
   List<Chat> get groupChats => _chats.where((c) => c.isGroupChat).toList();
   List<Chat> get privateChats => _chats.where((c) => c.isPrivateChat).toList();
 
+  // Reactive unread counts for tabs
+  RxMap<String, int> get unreadCountsMap => _unreadCounts;
+
+  int get groupChatsUnreadCount {
+    int count = 0;
+    for (final chat in groupChats) {
+      if (chat.id != null) {
+        count += _unreadCounts[chat.id!] ?? 0;
+      }
+    }
+    return count;
+  }
+
+  int get privateChatsUnreadCount {
+    int count = 0;
+    for (final chat in privateChats) {
+      if (chat.id != null) {
+        count += _unreadCounts[chat.id!] ?? 0;
+      }
+    }
+    return count;
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -152,6 +175,30 @@ class ChatRepository extends GetxService {
   /// Get total unread count across all chats
   int get totalUnreadCount {
     return _unreadCounts.values.fold(0, (sum, count) => sum + count);
+  }
+
+  /// Create or get private chat with another user
+  Future<Chat?> createPrivateChat(String targetUserId) async {
+    try {
+      _isLoadingChats.value = true;
+      _errorMessage.value = '';
+
+      final chat = await _chatService.createPrivateChat(targetUserId);
+
+      // Add to chats list if not already there
+      final existingIndex = _chats.indexWhere((c) => c.id == chat.id);
+      if (existingIndex == -1) {
+        _chats.insert(0, chat);
+      }
+
+      return chat;
+    } catch (e) {
+      _errorMessage.value = e.toString();
+      print('ChatRepository: Error creating private chat: $e');
+      return null;
+    } finally {
+      _isLoadingChats.value = false;
+    }
   }
 
   // ============ MESSAGE OPERATIONS ============

@@ -50,9 +50,9 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
           indicatorColor: AppColors.primary1,
           labelColor: AppColors.primary1,
           unselectedLabelColor: AppColors.grey,
-          tabs: const [
-            Tab(text: 'Group Chats'),
-            Tab(text: 'Private Chats'),
+          tabs: [
+            Obx(() => _buildTabWithBadge('Group Chats', false)),
+            Obx(() => _buildTabWithBadge('Private Chats', true)),
           ],
         ),
       ),
@@ -101,17 +101,54 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
     );
   }
 
+  Widget _buildTabWithBadge(String title, bool isPrivate) {
+    // Access the RxMap to trigger reactivity
+    final _ = chatController.unreadCountsMap.length;
+    final unreadCount = isPrivate
+        ? chatController.privateChatsUnreadCount
+        : chatController.groupChatsUnreadCount;
+
+    return Tab(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(title),
+          if (unreadCount > 0) ...[
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.notification,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                unreadCount > 99 ? '99+' : '$unreadCount',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildChatList({required bool isGroupChat}) {
     return Obx(() {
-      if (chatController.isLoading) {
+      final chats = isGroupChat ? chatController.groupChats : chatController.privateChats;
+
+      // Only show loading if we have no cached data
+      if (chatController.isLoading && chats.isEmpty) {
         return Center(
           child: CircularProgressIndicator(
             color: AppColors.primary1,
           ),
         );
       }
-
-      final chats = isGroupChat ? chatController.groupChats : chatController.privateChats;
 
       if (chats.isEmpty) {
         return Center(

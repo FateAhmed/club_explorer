@@ -4,6 +4,7 @@ import 'package:explorify/utils/AppColors.dart';
 import 'package:explorify/utils/AppDimens.dart';
 import 'package:explorify/utils/Validations.dart';
 import 'package:explorify/controllers/chat_session_controller.dart';
+import 'package:explorify/controllers/chat_controller.dart';
 import 'package:explorify/controllers/auth_controller.dart';
 import 'package:explorify/models/chat_models.dart';
 import 'package:flutter/material.dart';
@@ -176,11 +177,13 @@ class _InChatState extends State<InChat> {
         ],
       ),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.people_outline),
-          onPressed: _showParticipants,
-          tooltip: 'View participants',
-        ),
+        // Only show participants icon for group chats
+        if (_sessionController.currentChat?.isGroupChat == true)
+          IconButton(
+            icon: const Icon(Icons.people_outline),
+            onPressed: _showParticipants,
+            tooltip: 'View participants',
+          ),
       ],
       backgroundColor: AppColors.white,
     );
@@ -188,70 +191,131 @@ class _InChatState extends State<InChat> {
 
   void _showParticipants() {
     final participants = _sessionController.participants;
+    final searchController = TextEditingController();
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.6,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-        ),
-        child: Column(
-          children: [
-            // Handle bar
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          // Filter participants based on search query
+          final query = searchController.text.toLowerCase();
+          final filteredParticipants = query.isEmpty
+              ? participants
+              : participants.where((p) {
+                  final name = p.displayName.toLowerCase();
+                  final email = (p.email ?? '').toLowerCase();
+                  return name.contains(query) || email.contains(query);
+                }).toList();
+
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.7,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
               ),
             ),
-            // Header
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Icon(Icons.people, color: AppColors.primary1),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Participants (${participants.length})',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+            child: Column(
+              children: [
+                // Handle bar
+                Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                // Header
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Icon(Icons.people, color: AppColors.primary1),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Participants (${participants.length})',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Search bar
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: TextField(
+                    controller: searchController,
+                    onChanged: (_) => setModalState(() {}),
+                    decoration: InputDecoration(
+                      hintText: 'Search participants...',
+                      hintStyle: TextStyle(color: Colors.grey[400]),
+                      prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
+                      suffixIcon: searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: Icon(Icons.clear, color: Colors.grey[400]),
+                              onPressed: () {
+                                searchController.clear();
+                                setModalState(() {});
+                              },
+                            )
+                          : null,
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                     ),
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 8),
+                const Divider(height: 1),
+                // Participants list
+                Expanded(
+                  child: filteredParticipants.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.search_off,
+                                size: 48,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                query.isEmpty
+                                    ? 'No participants found'
+                                    : 'No results for "$query"',
+                                style: TextStyle(color: Colors.grey[600]),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          itemCount: filteredParticipants.length,
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          itemBuilder: (context, index) {
+                            final participant = filteredParticipants[index];
+                            return _buildParticipantTile(participant);
+                          },
+                        ),
+                ),
+              ],
             ),
-            const Divider(height: 1),
-            // Participants list
-            Expanded(
-              child: participants.isEmpty
-                  ? Center(
-                      child: Text(
-                        'No participants found',
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
-                    )
-                  : ListView.builder(
-                      itemCount: participants.length,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      itemBuilder: (context, index) {
-                        final participant = participants[index];
-                        return _buildParticipantTile(participant);
-                      },
-                    ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -285,6 +349,7 @@ class _InChatState extends State<InChat> {
     }
 
     return ListTile(
+      onTap: isCurrentUser ? null : () => _showUserProfileDialog(participant, avatarImage),
       leading: CircleAvatar(
         backgroundColor: AppColors.primary1,
         backgroundImage: avatarImage,
@@ -335,6 +400,209 @@ class _InChatState extends State<InChat> {
         ),
       ),
     );
+  }
+
+  void _showUserProfileDialog(ChatParticipant participant, ImageProvider? avatarImage) {
+    final avatarLetter = participant.name?.isNotEmpty == true
+        ? participant.name![0].toUpperCase()
+        : participant.email?.isNotEmpty == true
+            ? participant.email![0].toUpperCase()
+            : 'U';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.only(bottom: 20),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            // User avatar
+            CircleAvatar(
+              radius: 50,
+              backgroundColor: AppColors.primary1,
+              backgroundImage: avatarImage,
+              child: avatarImage == null
+                  ? Text(
+                      avatarLetter,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 32,
+                      ),
+                    )
+                  : null,
+            ),
+            const SizedBox(height: 16),
+            // User name
+            Text(
+              participant.displayName,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            // User email if available
+            if (participant.email != null && participant.email!.isNotEmpty)
+              Text(
+                participant.email!,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+            const SizedBox(height: 8),
+            // Status
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: participant.isActive ? Colors.green : Colors.grey,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  participant.isActive ? 'Active' : 'Inactive',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: participant.isActive ? Colors.green : Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            // Send DM button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _startPrivateChat(participant),
+                icon: const Icon(Icons.message, color: Colors.white),
+                label: const Text(
+                  'Send Message',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary1,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Cancel button
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: MediaQuery.of(context).padding.bottom),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _startPrivateChat(ChatParticipant participant) async {
+    // Store necessary data before closing modals
+    final targetUserId = participant.userId;
+    final targetDisplayName = participant.displayName;
+
+    // Close both modals first
+    Navigator.of(context).pop(); // Close user profile dialog
+    Navigator.of(context).pop(); // Close participants modal
+
+    // Wait for modals to close
+    await Future.delayed(const Duration(milliseconds: 200));
+
+    // Show loading snackbar instead of dialog to avoid widget tree issues
+    Get.snackbar(
+      'Please wait',
+      'Starting conversation...',
+      snackPosition: SnackPosition.BOTTOM,
+      showProgressIndicator: true,
+      isDismissible: false,
+      duration: const Duration(seconds: 30),
+    );
+
+    try {
+      final chatController = Get.find<ChatController>();
+      final chat = await chatController.createPrivateChat(targetUserId);
+
+      // Close the snackbar
+      Get.closeAllSnackbars();
+
+      if (chat != null && chat.id != null) {
+        // Wait for frame to complete before navigating
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          // Go back to messages screen first
+          Get.back();
+
+          // Then navigate to new chat after a short delay
+          Future.delayed(const Duration(milliseconds: 150), () {
+            chatController.setCurrentChat(chat);
+            Get.to(
+              () => InChat(
+                chatId: chat.id!,
+                chatName: targetDisplayName,
+              ),
+            );
+          });
+        });
+      } else {
+        Get.snackbar(
+          'Error',
+          'Failed to start conversation',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red[100],
+          colorText: Colors.red[800],
+        );
+      }
+    } catch (e) {
+      Get.closeAllSnackbars();
+      Get.snackbar(
+        'Error',
+        'Failed to start conversation: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red[100],
+        colorText: Colors.red[800],
+      );
+    }
   }
 
   Color _getRoleColor(ChatRole role) {
