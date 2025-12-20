@@ -1,10 +1,16 @@
 import 'dart:io';
-import 'package:explorify/components/booking_card.dart';
+import 'package:explorify/components/horizontal_booking_card.dart';
 import 'package:explorify/components/tour_card.dart';
 import 'package:explorify/controllers/auth_controller.dart';
+import 'package:explorify/screens/booking/my_bookings_screen.dart';
+import 'package:explorify/screens/chat/chat.dart';
 import 'package:explorify/screens/home/home_controller.dart';
 import 'package:explorify/screens/mainwrapper/main_wrapper_controller.dart';
+import 'package:explorify/screens/notifications/notifications_screen.dart';
 import 'package:explorify/screens/search/search_screen.dart';
+import 'package:explorify/services/chat_service.dart';
+import 'package:explorify/controllers/chat_controller.dart';
+import 'package:explorify/models/tour.dart';
 import 'package:explorify/utils/AppColors.dart';
 import 'package:explorify/utils/AppDimens.dart';
 import 'package:flutter/cupertino.dart';
@@ -71,6 +77,48 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Future<void> _navigateToTourChat(TourModel tour) async {
+    try {
+      // Show loading indicator
+      Get.dialog(
+        Center(
+          child: CircularProgressIndicator(color: AppColors.primary1),
+        ),
+        barrierDismissible: false,
+      );
+
+      // Get chat for this tour
+      final chatService = ChatService(authToken: authController.token);
+      final chat = await chatService.getChatByTourId(tour.id);
+
+      // Close loading dialog
+      Get.back();
+
+      // Get or create ChatController and set current chat
+      final chatController = Get.put(ChatController());
+      chatController.setCurrentChat(chat);
+
+      // Navigate to chat
+      Get.to(() => InChat(
+            chatId: chat.id!,
+            chatName: chat.name,
+          ));
+    } catch (e) {
+      // Close loading dialog if open
+      if (Get.isDialogOpen == true) {
+        Get.back();
+      }
+
+      Get.snackbar(
+        'Error',
+        'Failed to load chat',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withAlpha(200),
+        colorText: Colors.white,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -102,28 +150,21 @@ class _HomePageState extends State<HomePage> {
                         ],
                       ),
                     ),
-                    Row(
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(color: AppColors.grey400),
-                            shape: BoxShape.circle,
-                          ),
-                          padding: EdgeInsets.all(5),
-                          child: Center(
-                            child: Icon(
-                              CupertinoIcons.bell,
-                              color: AppColors.grey,
-                            ),
+                    GestureDetector(
+                      onTap: () => Get.to(() => const NotificationsScreen()),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppColors.grey400),
+                          shape: BoxShape.circle,
+                        ),
+                        padding: EdgeInsets.all(5),
+                        child: Center(
+                          child: Icon(
+                            CupertinoIcons.bell,
+                            color: AppColors.grey,
                           ),
                         ),
-                        AppDimens.sizebox15,
-                        Icon(
-                          CupertinoIcons.list_bullet,
-                          color: AppColors.grey,
-                          size: 25,
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
@@ -170,22 +211,89 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 AppDimens.sizebox15,
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'All Tours',
-                      style: TextStyle(
-                        color: AppColors.textprimary,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
+                // Conditional layout based on booking status
+                Obx(() {
+                  final hasBookings = homeController.bookedTours.isNotEmpty;
+                  final isLoading = homeController.isLoading.value;
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Bookings section (only if user has bookings)
+                      if (hasBookings) ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Your Bookings',
+                              style: TextStyle(
+                                color: AppColors.textprimary,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Get.to(() => const MyBookingsScreen());
+                              },
+                              child: Text(
+                                'See All',
+                                style: TextStyle(
+                                  color: AppColors.primary1,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        AppDimens.sizebox10,
+                        // Horizontal scroll of booking cards
+                        SizedBox(
+                          height: 190,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: homeController.bookedTours.length,
+                            itemBuilder: (context, index) {
+                              final tour = homeController.bookedTours[index];
+                              // Try to get unread count for this tour's chat
+                              int unreadCount = 0;
+                              try {
+                                final chatController = Get.find<ChatController>();
+                                final tourChat = chatController.groupChats.firstWhereOrNull(
+                                  (chat) => chat.tourId == tour.id,
+                                );
+                                if (tourChat != null && tourChat.id != null) {
+                                  unreadCount = chatController.getUnreadCount(tourChat.id!);
+                                }
+                              } catch (e) {
+                                // ChatController not initialized yet
+                              }
+                              return HorizontalBookingCard(
+                                tour: tour,
+                                status: 'Confirmed',
+                                onChatPressed: () => _navigateToTourChat(tour),
+                                unreadCount: unreadCount,
+                              );
+                            },
+                          ),
+                        ),
+                        AppDimens.sizebox20,
+                      ],
+
+                      // All Tours section header
+                      Text(
+                        'All Tours',
+                        style: TextStyle(
+                          color: AppColors.textprimary,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                Obx(
-                  () => homeController.isLoading.value
-                      ? SizedBox(
+                      AppDimens.sizebox10,
+
+                      // Tours content (loading, empty, or list)
+                      if (isLoading)
+                        SizedBox(
                           height: 350,
                           child: Center(
                             child: CircularProgressIndicator(
@@ -193,133 +301,39 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ),
                         )
-                      : homeController.allTours.isEmpty
-                          ? SizedBox(
-                              height: 200,
-                              child: Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      CupertinoIcons.map,
-                                      size: 48,
-                                      color: AppColors.grey,
-                                    ),
-                                    AppDimens.sizebox10,
-                                    Text(
-                                      'No tours available',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: AppColors.grey,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
+                      else if (homeController.allTours.isEmpty)
+                        SizedBox(
+                          height: 200,
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  CupertinoIcons.map,
+                                  size: 48,
+                                  color: AppColors.grey,
                                 ),
-                              ),
-                            )
-                          : SizedBox(
-                              width: double.infinity,
-                              child: SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    ...homeController.allTours.map((tour) => TourCard(tour: tour)).toList(),
-                                  ],
+                                AppDimens.sizebox10,
+                                Text(
+                                  'No tours available',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: AppColors.grey,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
-                ),
-                AppDimens.sizebox10,
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Your Bookings',
-                      style: TextStyle(
-                        color: AppColors.textprimary,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    if (homeController.bookedTours.isNotEmpty)
-                      TextButton(
-                        onPressed: () {
-                          // Navigate to all bookings
-                        },
-                        child: Text(
-                          'See All',
-                          style: TextStyle(
-                            color: AppColors.primary1,
-                            fontWeight: FontWeight.w500,
                           ),
-                        ),
-                      ),
-                  ],
-                ),
-                AppDimens.sizebox10,
-                Obx(
-                  () => homeController.isLoading.value
-                      ? const SizedBox(
-                          height: 120,
-                          child: Center(child: CircularProgressIndicator()),
                         )
-                      : homeController.bookedTours.isEmpty
-                          ? Container(
-                              padding: const EdgeInsets.symmetric(vertical: 40),
-                              decoration: BoxDecoration(
-                                color: AppColors.grey100,
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(16),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(
-                                        CupertinoIcons.ticket,
-                                        size: 32,
-                                        color: AppColors.grey,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      'No bookings yet',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: AppColors.textprimary,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Book a tour to see it here',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: AppColors.grey,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            )
-                          : Column(
-                              children: homeController.bookedTours
-                                  .map((tour) => BookingCard(
-                                        tour: tour,
-                                        status: 'Confirmed',
-                                        bookingDate: DateTime.now().subtract(const Duration(days: 3)),
-                                      ))
-                                  .toList(),
-                            ),
-                ),
+                      else
+                        // Vertical list of tour cards
+                        ...homeController.allTours
+                            .map((tour) => TourCard(tour: tour, isHorizontal: true))
+                            .toList(),
+                    ],
+                  );
+                }),
                 AppDimens.sizebox20,
               ],
             ),
