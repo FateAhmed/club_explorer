@@ -1,9 +1,12 @@
 import 'dart:io';
 import 'package:explorify/components/theme_button.dart';
+import 'package:explorify/config/routes.dart';
 import 'package:explorify/utils/AppColors.dart';
 import 'package:explorify/utils/AppDimens.dart';
 import 'package:explorify/controllers/auth_controller.dart';
 import 'package:explorify/screens/auth/login.dart';
+import 'package:explorify/screens/booking/my_bookings_screen.dart';
+import 'package:explorify/screens/home/web_widget/web_widget.dart';
 import 'package:explorify/screens/profile/edit_profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -157,12 +160,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         title: 'Privacy & Security',
                         subtitle: 'Manage your privacy settings',
                         onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('This feature is coming soon'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
+                          Get.to(() => WebViewPage(
+                            url: WebRoutes.privacyPolicy(),
+                            title: 'Privacy Policy',
+                          ));
                         },
                       ),
                       _buildDivider(),
@@ -171,12 +172,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         title: 'Help & Support',
                         subtitle: 'Get help and contact support',
                         onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('This feature is coming soon'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
+                          Get.to(() => WebViewPage(
+                            url: WebRoutes.helpSupport(),
+                            title: 'Help & Support',
+                          ));
                         },
                       ),
                       _buildDivider(),
@@ -185,12 +184,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         title: 'About',
                         subtitle: 'App version and information',
                         onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('This feature is coming soon'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
+                          Get.to(() => WebViewPage(
+                            url: WebRoutes.about(),
+                            title: 'About',
+                          ));
                         },
                       ),
                     ],
@@ -249,12 +246,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         title: 'Booking History',
                         subtitle: 'View your past bookings',
                         onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('This feature is coming soon'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
+                          Get.to(() => const MyBookingsScreen());
                         },
                       ),
                     ],

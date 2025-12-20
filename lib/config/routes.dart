@@ -20,4 +20,10 @@ class WebRoutes {
   // User routes
   static String profile() => '${env.webUrl}/profile';
   static String bookings() => '${env.webUrl}/bookings';
+
+  // Legal & Info routes
+  static String privacyPolicy() => '${env.webUrl}/privacy-policy';
+  static String termsOfService() => '${env.webUrl}/terms-of-service';
+  static String helpSupport() => '${env.webUrl}/help-support';
+  static String about() => '${env.webUrl}/about';
 }
