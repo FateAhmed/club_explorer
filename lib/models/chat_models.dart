@@ -170,6 +170,41 @@ class Chat {
   // Helper to check if chat is a private chat
   bool get isPrivateChat => chatType == ChatType.PRIVATE;
 
+  /// Creates a copy of this chat with updated fields
+  Chat copyWith({
+    String? id,
+    ChatType? chatType,
+    String? tourId,
+    DateTime? startDate,
+    String? name,
+    String? description,
+    List<ChatParticipant>? participants,
+    ChatStatus? status,
+    ChatMessage? lastMessage,
+    DateTime? lastActivity,
+    ChatSettings? settings,
+    Map<String, dynamic>? metadata,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return Chat(
+      id: id ?? this.id,
+      chatType: chatType ?? this.chatType,
+      tourId: tourId ?? this.tourId,
+      startDate: startDate ?? this.startDate,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      participants: participants ?? this.participants,
+      status: status ?? this.status,
+      lastMessage: lastMessage ?? this.lastMessage,
+      lastActivity: lastActivity ?? this.lastActivity,
+      settings: settings ?? this.settings,
+      metadata: metadata ?? this.metadata,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
   factory Chat.fromJson(Map<String, dynamic> json) {
     return Chat(
       id: json['_id'] ?? json['id'],

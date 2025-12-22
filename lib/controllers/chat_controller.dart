@@ -108,6 +108,9 @@ class ChatController extends GetxController {
     return _repository.getUnreadCount(chatId);
   }
 
+  /// Reactive total unread count for UI binding
+  RxInt get totalUnreadCountRx => _repository.totalUnreadCountRx;
+
   /// Get total unread count
   int get totalUnreadCount => _repository.totalUnreadCount;
 

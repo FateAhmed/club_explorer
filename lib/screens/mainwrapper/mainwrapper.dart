@@ -10,6 +10,7 @@ class MainWrapper extends StatelessWidget {
   MainWrapper({super.key});
 
   final MainWrapperController _mainWrapperController = Get.find<MainWrapperController>();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -72,10 +73,15 @@ class MainWrapper extends StatelessWidget {
           color: _mainWrapperController.currentPage == 1 ? AppColors.primary1 : Colors.grey,
           size: 22,
         ),
-        if (Get.isRegistered<ChatController>())
-          GetX<ChatController>(
-            builder: (controller) {
-              final count = controller.totalUnreadCount;
+        // Use builder to check ChatController availability at runtime
+        Builder(
+          builder: (context) {
+            if (!Get.isRegistered<ChatController>()) {
+              return const SizedBox.shrink();
+            }
+            final controller = Get.find<ChatController>();
+            return Obx(() {
+              final count = controller.totalUnreadCountRx.value;
               if (count > 0) {
                 return Positioned(
                   right: -8,
@@ -100,8 +106,9 @@ class MainWrapper extends StatelessWidget {
                 );
               }
               return const SizedBox.shrink();
-            },
-          ),
+            });
+          },
+        ),
       ],
     );
   }

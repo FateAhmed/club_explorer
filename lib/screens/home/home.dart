@@ -247,33 +247,54 @@ class _HomePageState extends State<HomePage> {
                           ],
                         ),
                         AppDimens.sizebox10,
-                        // Horizontal scroll of booking cards
+                        // Horizontal scroll of booking cards - reactive to unread counts
                         SizedBox(
                           height: 190,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: homeController.bookedTours.length,
-                            itemBuilder: (context, index) {
-                              final tour = homeController.bookedTours[index];
-                              // Try to get unread count for this tour's chat
-                              int unreadCount = 0;
-                              try {
-                                final chatController = Get.find<ChatController>();
-                                final tourChat = chatController.groupChats.firstWhereOrNull(
-                                  (chat) => chat.tourId == tour.id,
+                          child: Builder(
+                            builder: (context) {
+                              // Check ChatController availability at build time
+                              if (!Get.isRegistered<ChatController>()) {
+                                return ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: homeController.bookedTours.length,
+                                  itemBuilder: (context, index) {
+                                    final tour = homeController.bookedTours[index];
+                                    return HorizontalBookingCard(
+                                      tour: tour,
+                                      status: 'Confirmed',
+                                      onChatPressed: () => _navigateToTourChat(tour),
+                                      unreadCount: 0,
+                                    );
+                                  },
                                 );
-                                if (tourChat != null && tourChat.id != null) {
-                                  unreadCount = chatController.getUnreadCount(tourChat.id!);
-                                }
-                              } catch (e) {
-                                // ChatController not initialized yet
                               }
-                              return HorizontalBookingCard(
-                                tour: tour,
-                                status: 'Confirmed',
-                                onChatPressed: () => _navigateToTourChat(tour),
-                                unreadCount: unreadCount,
-                              );
+                              final chatController = Get.find<ChatController>();
+                              return Obx(() {
+                                // Observe unread counts map to trigger rebuilds
+                                final _ = chatController.unreadCountsMap.length;
+
+                                return ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: homeController.bookedTours.length,
+                                  itemBuilder: (context, index) {
+                                    final tour = homeController.bookedTours[index];
+                                    // Get unread count for this tour's chat
+                                    int unreadCount = 0;
+                                    final tourChat = chatController.groupChats.firstWhereOrNull(
+                                      (chat) => chat.tourId == tour.id,
+                                    );
+                                    if (tourChat != null && tourChat.id != null) {
+                                      unreadCount = chatController.getUnreadCount(tourChat.id!);
+                                    }
+                                    return HorizontalBookingCard(
+                                      tour: tour,
+                                      status: 'Confirmed',
+                                      onChatPressed: () => _navigateToTourChat(tour),
+                                      unreadCount: unreadCount,
+                                    );
+                                  },
+                                );
+                              });
                             },
                           ),
                         ),

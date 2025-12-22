@@ -35,6 +35,7 @@ class ChatRepository extends GetxService {
 
   // Caches (reactive for UI updates)
   final RxMap<String, int> _unreadCounts = <String, int>{}.obs;
+  final RxInt _totalUnreadCount = 0.obs;
   String? _currentUserId;
   String? _currentChatId;
 
@@ -81,6 +82,33 @@ class ChatRepository extends GetxService {
     super.onInit();
     _webSocketService = WebSocketService.instance;
     _initializeFromAuth();
+
+    // Listen to unread counts changes and update total
+    ever(_unreadCounts, (_) => _updateTotalUnreadCount());
+  }
+
+  /// Update total unread count from map
+  void _updateTotalUnreadCount() {
+    _totalUnreadCount.value = _unreadCounts.values.fold(0, (sum, count) => sum + count);
+  }
+
+  /// Update a chat's lastMessage and lastActivity when new message arrives
+  void _updateChatWithNewMessage(ChatMessage message) {
+    final chatIndex = _chats.indexWhere((c) => c.id == message.chatId);
+    if (chatIndex == -1) return;
+
+    final chat = _chats[chatIndex];
+    final updatedChat = chat.copyWith(
+      lastMessage: message,
+      lastActivity: message.createdAt,
+    );
+
+    // Remove from current position and insert at top (most recent)
+    _chats.removeAt(chatIndex);
+    _chats.insert(0, updatedChat);
+
+    // Force notify listeners to ensure UI updates
+    _chats.refresh();
   }
 
   /// Initialize repository with auth data
@@ -165,6 +193,8 @@ class ChatRepository extends GetxService {
         _unreadCounts[chat.id!] = participant.unreadCount;
       }
     }
+    // Trigger reactive update
+    _updateTotalUnreadCount();
   }
 
   /// Get unread count for a specific chat (uses server-tracked count)
@@ -172,10 +202,11 @@ class ChatRepository extends GetxService {
     return _unreadCounts[chatId] ?? 0;
   }
 
+  /// Reactive total unread count for UI binding
+  RxInt get totalUnreadCountRx => _totalUnreadCount;
+
   /// Get total unread count across all chats
-  int get totalUnreadCount {
-    return _unreadCounts.values.fold(0, (sum, count) => sum + count);
-  }
+  int get totalUnreadCount => _totalUnreadCount.value;
 
   /// Create or get private chat with another user
   Future<Chat?> createPrivateChat(String targetUserId) async {
@@ -342,10 +373,15 @@ class ChatRepository extends GetxService {
     final isCurrentChat = _currentChatId != null && message.chatId == _currentChatId;
     final isOwnMessage = message.senderId == _currentUserId;
 
+    // Update the chat's lastMessage and lastActivity in the chats list
+    _updateChatWithNewMessage(message);
+
     // Increment unread count if message is from another user and not in current chat
     if (!isOwnMessage && !isCurrentChat) {
       final currentCount = _unreadCounts[message.chatId] ?? 0;
       _unreadCounts[message.chatId] = currentCount + 1;
+      // Trigger reactive update for badge
+      _updateTotalUnreadCount();
     }
 
     // Only add to message list if it's for the current chat
@@ -395,6 +431,8 @@ class ChatRepository extends GetxService {
 
       // Update local unread count
       _unreadCounts[chatId] = 0;
+      // Trigger reactive update for badge
+      _updateTotalUnreadCount();
 
       // Update message statuses locally
       for (int i = 0; i < _messages.length; i++) {
@@ -469,6 +507,7 @@ class ChatRepository extends GetxService {
     _messageIds.clear();
     _localIdToServerId.clear();
     _unreadCounts.clear();
+    _totalUnreadCount.value = 0;
     _typingUsers.clear();
     _currentUserId = null;
     _currentChatId = null;

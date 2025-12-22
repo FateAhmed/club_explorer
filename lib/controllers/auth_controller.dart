@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
+import '../controllers/chat_controller.dart';
 
 class AuthController extends GetxController {
   // Observable state
@@ -78,6 +79,9 @@ class AuthController extends GetxController {
             await prefs.setString(_profileImageKey, serverProfileImage);
           }
 
+          // Initialize chat system for logged-in user
+          _initializeChatController();
+
           return true;
         }
       }
@@ -85,6 +89,13 @@ class AuthController extends GetxController {
     } catch (e) {
       print('Token validation error: $e');
       return false;
+    }
+  }
+
+  /// Initialize ChatController for real-time chat features
+  void _initializeChatController() {
+    if (!Get.isRegistered<ChatController>()) {
+      Get.put(ChatController(), permanent: true);
     }
   }
 
@@ -368,6 +379,9 @@ class AuthController extends GetxController {
     accessToken.value = data['accessToken'];
     refreshToken.value = data['refreshToken'];
     await _saveUserData();
+
+    // Initialize chat system for logged-in user
+    _initializeChatController();
   }
 
   /// Handle authentication errors
@@ -399,6 +413,11 @@ class AuthController extends GetxController {
     refreshToken.value = '';
     profileImage.value = '';
     errorMessage.value = '';
+
+    // Clean up chat controller
+    if (Get.isRegistered<ChatController>()) {
+      Get.find<ChatController>().disconnectWebSocket();
+    }
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_userDataKey);
