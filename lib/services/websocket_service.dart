@@ -206,12 +206,9 @@ class WebSocketService {
       final message = ChatMessage.fromJson(messageData);
       final localId = data['localId'] as String?;
 
-      // Use callback if set (repository pattern)
+      // Use callback (repository pattern)
       if (onMessageReceived != null) {
         onMessageReceived!(message, localId);
-      } else {
-        // Fallback to legacy controller pattern
-        _legacyHandleNewMessage(message);
       }
     } catch (e) {
       print('Error handling new message: $e');
@@ -231,19 +228,6 @@ class WebSocketService {
       }
     } catch (e) {
       print('Error handling message error: $e');
-    }
-  }
-
-  // Legacy handler for backward compatibility
-  void _legacyHandleNewMessage(ChatMessage message) {
-    try {
-      // Try to find ChatController and add message
-      // This maintains backward compatibility
-      final chatController = Get.find<dynamic>(tag: 'ChatController');
-      chatController.addMessage(message);
-    } catch (e) {
-      // Controller not found, which is fine if using repository
-      print('Legacy message handler: Controller not found');
     }
   }
 
