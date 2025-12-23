@@ -4,8 +4,11 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
+import 'package:explorify/config/api_keys.dart';
 import 'package:explorify/utils/AppColors.dart';
 import 'package:explorify/utils/AppDimens.dart';
+import 'package:explorify/utils/map_styles.dart';
+import 'package:explorify/utils/map_utils.dart';
 import 'package:flutter_html/flutter_html.dart';
 
 class NavigationScreen extends StatefulWidget {
@@ -38,195 +41,6 @@ class _NavigationScreenState extends State<NavigationScreen> with TickerProvider
   String currentInstruction = '';
   bool isArrived = false;
 
-  static const String apiKey = 'AIzaSyBLTm_mUtLfjWxUZD5YB4_BNoYXz-AUw5U';
-
-  // Dark map style
-  static const String _mapStyle = '''[
-    {
-      "elementType": "geometry",
-      "stylers": [
-        {
-          "color": "#212121"
-        }
-      ]
-    },
-    {
-      "elementType": "labels.icon",
-      "stylers": [
-        {
-          "visibility": "off"
-        }
-      ]
-    },
-    {
-      "elementType": "labels.text.fill",
-      "stylers": [
-        {
-          "color": "#757575"
-        }
-      ]
-    },
-    {
-      "elementType": "labels.text.stroke",
-      "stylers": [
-        {
-          "color": "#212121"
-        }
-      ]
-    },
-    {
-      "featureType": "administrative",
-      "elementType": "geometry",
-      "stylers": [
-        {
-          "color": "#757575"
-        }
-      ]
-    },
-    {
-      "featureType": "administrative.country",
-      "elementType": "labels.text.fill",
-      "stylers": [
-        {
-          "color": "#9e9e9e"
-        }
-      ]
-    },
-    {
-      "featureType": "administrative.land_parcel",
-      "stylers": [
-        {
-          "visibility": "off"
-        }
-      ]
-    },
-    {
-      "featureType": "administrative.locality",
-      "elementType": "labels.text.fill",
-      "stylers": [
-        {
-          "color": "#bdbdbd"
-        }
-      ]
-    },
-    {
-      "featureType": "poi",
-      "elementType": "labels.text.fill",
-      "stylers": [
-        {
-          "color": "#757575"
-        }
-      ]
-    },
-    {
-      "featureType": "poi.park",
-      "elementType": "geometry",
-      "stylers": [
-        {
-          "color": "#181818"
-        }
-      ]
-    },
-    {
-      "featureType": "poi.park",
-      "elementType": "labels.text.fill",
-      "stylers": [
-        {
-          "color": "#616161"
-        }
-      ]
-    },
-    {
-      "featureType": "poi.park",
-      "elementType": "labels.text.stroke",
-      "stylers": [
-        {
-          "color": "#1b1b1b"
-        }
-      ]
-    },
-    {
-      "featureType": "road",
-      "elementType": "geometry.fill",
-      "stylers": [
-        {
-          "color": "#2c2c2c"
-        }
-      ]
-    },
-    {
-      "featureType": "road",
-      "elementType": "labels.text.fill",
-      "stylers": [
-        {
-          "color": "#8a8a8a"
-        }
-      ]
-    },
-    {
-      "featureType": "road.arterial",
-      "elementType": "geometry",
-      "stylers": [
-        {
-          "color": "#373737"
-        }
-      ]
-    },
-    {
-      "featureType": "road.highway",
-      "elementType": "geometry",
-      "stylers": [
-        {
-          "color": "#3c3c3c"
-        }
-      ]
-    },
-    {
-      "featureType": "road.highway.controlled_access",
-      "elementType": "geometry",
-      "stylers": [
-        {
-          "color": "#4e4e4e"
-        }
-      ]
-    },
-    {
-      "featureType": "road.local",
-      "elementType": "labels.text.fill",
-      "stylers": [
-        {
-          "color": "#616161"
-        }
-      ]
-    },
-    {
-      "featureType": "transit",
-      "elementType": "labels.text.fill",
-      "stylers": [
-        {
-          "color": "#757575"
-        }
-      ]
-    },
-    {
-      "featureType": "water",
-      "elementType": "geometry",
-      "stylers": [
-        {
-          "color": "#000000"
-        }
-      ]
-    },
-    {
-      "featureType": "water",
-      "elementType": "labels.text.fill",
-      "stylers": [
-        {
-          "color": "#3d3d3d"
-        }
-      ]
-    }
-  ]''';
 
   @override
   void initState() {
@@ -340,7 +154,7 @@ class _NavigationScreenState extends State<NavigationScreen> with TickerProvider
           'origin=$origin'
           '&destination=$dest'
           '&mode=driving'
-          '&key=$apiKey';
+          '&key=${ApiKeys.googleMapsApiKey}';
 
       final response = await http.get(Uri.parse(url)).timeout(
         const Duration(seconds: 10),
@@ -363,7 +177,7 @@ class _NavigationScreenState extends State<NavigationScreen> with TickerProvider
           for (var route in data['routes']) {
             for (var leg in route['legs']) {
               for (var step in leg['steps']) {
-                List<maps.LatLng> stepPoints = _decodePolyline(step['polyline']['points']);
+                final stepPoints = MapUtils.decodePolyline(step['polyline']['points']).map((p) => maps.LatLng(p.latitude, p.longitude)).toList();
                 routePoints.addAll(stepPoints);
 
                 directions.add({
@@ -462,37 +276,6 @@ class _NavigationScreenState extends State<NavigationScreen> with TickerProvider
         });
       }
     }
-  }
-
-  List<maps.LatLng> _decodePolyline(String encoded) {
-    List<maps.LatLng> poly = [];
-    int index = 0, len = encoded.length;
-    int lat = 0, lng = 0;
-
-    while (index < len) {
-      int b, shift = 0, result = 0;
-      do {
-        b = encoded.codeUnitAt(index++) - 63;
-        result |= (b & 0x1f) << shift;
-        shift += 5;
-      } while (b >= 0x20);
-      int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
-      lat += dlat;
-
-      shift = 0;
-      result = 0;
-      do {
-        b = encoded.codeUnitAt(index++) - 63;
-        result |= (b & 0x1f) << shift;
-        shift += 5;
-      } while (b >= 0x20);
-      int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
-      lng += dlng;
-
-      final p = maps.LatLng((lat / 1E5).toDouble(), (lng / 1E5).toDouble());
-      poly.add(p);
-    }
-    return poly;
   }
 
   void _nextDestination() {
@@ -838,7 +621,7 @@ class _NavigationScreenState extends State<NavigationScreen> with TickerProvider
                       onMapCreated: (maps.GoogleMapController controller) {
                         mapController = controller;
                         // Apply dark map style
-                        controller.setMapStyle(_mapStyle);
+                        controller.setMapStyle(MapStyles.darkMapStyle);
                       },
                       initialCameraPosition: maps.CameraPosition(
                         target: widget.routePoints.isNotEmpty

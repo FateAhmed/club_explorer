@@ -2,11 +2,14 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ui' as ui;
 
+import 'package:explorify/config/api_keys.dart';
 import 'package:explorify/config/routes.dart';
 import 'package:explorify/screens/home/web_widget/web_widget.dart';
 import 'package:explorify/screens/tour/navigation_screen.dart';
 import 'package:explorify/utils/AppColors.dart';
 import 'package:explorify/utils/AppDimens.dart';
+import 'package:explorify/utils/map_styles.dart';
+import 'package:explorify/utils/map_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
@@ -52,196 +55,6 @@ class _TourRouteScreenState extends State<TourRouteScreen> {
   Timer? locationTimer;
   bool isLocationEnabled = false;
 
-  // Google Maps API Key - Replace with your actual API key
-  static const String apiKey = 'AIzaSyBLTm_mUtLfjWxUZD5YB4_BNoYXz-AUw5U';
-
-  // Dark map style
-  static const String _mapStyle = '''[
-    {
-      "elementType": "geometry",
-      "stylers": [
-        {
-          "color": "#212121"
-        }
-      ]
-    },
-    {
-      "elementType": "labels.icon",
-      "stylers": [
-        {
-          "visibility": "off"
-        }
-      ]
-    },
-    {
-      "elementType": "labels.text.fill",
-      "stylers": [
-        {
-          "color": "#757575"
-        }
-      ]
-    },
-    {
-      "elementType": "labels.text.stroke",
-      "stylers": [
-        {
-          "color": "#212121"
-        }
-      ]
-    },
-    {
-      "featureType": "administrative",
-      "elementType": "geometry",
-      "stylers": [
-        {
-          "color": "#757575"
-        }
-      ]
-    },
-    {
-      "featureType": "administrative.country",
-      "elementType": "labels.text.fill",
-      "stylers": [
-        {
-          "color": "#9e9e9e"
-        }
-      ]
-    },
-    {
-      "featureType": "administrative.land_parcel",
-      "stylers": [
-        {
-          "visibility": "off"
-        }
-      ]
-    },
-    {
-      "featureType": "administrative.locality",
-      "elementType": "labels.text.fill",
-      "stylers": [
-        {
-          "color": "#bdbdbd"
-        }
-      ]
-    },
-    {
-      "featureType": "poi",
-      "elementType": "labels.text.fill",
-      "stylers": [
-        {
-          "color": "#757575"
-        }
-      ]
-    },
-    {
-      "featureType": "poi.park",
-      "elementType": "geometry",
-      "stylers": [
-        {
-          "color": "#181818"
-        }
-      ]
-    },
-    {
-      "featureType": "poi.park",
-      "elementType": "labels.text.fill",
-      "stylers": [
-        {
-          "color": "#616161"
-        }
-      ]
-    },
-    {
-      "featureType": "poi.park",
-      "elementType": "labels.text.stroke",
-      "stylers": [
-        {
-          "color": "#1b1b1b"
-        }
-      ]
-    },
-    {
-      "featureType": "road",
-      "elementType": "geometry.fill",
-      "stylers": [
-        {
-          "color": "#2c2c2c"
-        }
-      ]
-    },
-    {
-      "featureType": "road",
-      "elementType": "labels.text.fill",
-      "stylers": [
-        {
-          "color": "#8a8a8a"
-        }
-      ]
-    },
-    {
-      "featureType": "road.arterial",
-      "elementType": "geometry",
-      "stylers": [
-        {
-          "color": "#373737"
-        }
-      ]
-    },
-    {
-      "featureType": "road.highway",
-      "elementType": "geometry",
-      "stylers": [
-        {
-          "color": "#3c3c3c"
-        }
-      ]
-    },
-    {
-      "featureType": "road.highway.controlled_access",
-      "elementType": "geometry",
-      "stylers": [
-        {
-          "color": "#4e4e4e"
-        }
-      ]
-    },
-    {
-      "featureType": "road.local",
-      "elementType": "labels.text.fill",
-      "stylers": [
-        {
-          "color": "#616161"
-        }
-      ]
-    },
-    {
-      "featureType": "transit",
-      "elementType": "labels.text.fill",
-      "stylers": [
-        {
-          "color": "#757575"
-        }
-      ]
-    },
-    {
-      "featureType": "water",
-      "elementType": "geometry",
-      "stylers": [
-        {
-          "color": "#000000"
-        }
-      ]
-    },
-    {
-      "featureType": "water",
-      "elementType": "labels.text.fill",
-      "stylers": [
-        {
-          "color": "#3d3d3d"
-        }
-      ]
-    }
-  ]''';
 
   @override
   void initState() {
@@ -284,7 +97,7 @@ class _TourRouteScreenState extends State<TourRouteScreen> {
           '&destination=$destination'
           '&waypoints=$waypoints'
           '&mode=driving'
-          '&key=$apiKey';
+          '&key=${ApiKeys.googleMapsApiKey}';
 
       final response = await http.get(Uri.parse(url));
 
@@ -299,7 +112,7 @@ class _TourRouteScreenState extends State<TourRouteScreen> {
             for (var leg in route['legs']) {
               for (var step in leg['steps']) {
                 // Decode the polyline
-                List<LatLng> stepPoints = _decodePolyline(step['polyline']['points']);
+                List<LatLng> stepPoints = MapUtils.decodePolyline(step['polyline']['points']);
                 routePoints.addAll(stepPoints);
               }
             }
@@ -346,37 +159,6 @@ class _TourRouteScreenState extends State<TourRouteScreen> {
       );
       isLoadingRoute = false;
     });
-  }
-
-  List<LatLng> _decodePolyline(String encoded) {
-    List<LatLng> poly = [];
-    int index = 0, len = encoded.length;
-    int lat = 0, lng = 0;
-
-    while (index < len) {
-      int b, shift = 0, result = 0;
-      do {
-        b = encoded.codeUnitAt(index++) - 63;
-        result |= (b & 0x1f) << shift;
-        shift += 5;
-      } while (b >= 0x20);
-      int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
-      lat += dlat;
-
-      shift = 0;
-      result = 0;
-      do {
-        b = encoded.codeUnitAt(index++) - 63;
-        result |= (b & 0x1f) << shift;
-        shift += 5;
-      } while (b >= 0x20);
-      int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
-      lng += dlng;
-
-      final p = LatLng((lat / 1E5).toDouble(), (lng / 1E5).toDouble());
-      poly.add(p);
-    }
-    return poly;
   }
 
   void _initializeMap() async {
@@ -811,7 +593,7 @@ class _TourRouteScreenState extends State<TourRouteScreen> {
                   onMapCreated: (GoogleMapController controller) {
                     mapController = controller;
                     // Apply dark map style
-                    controller.setMapStyle(_mapStyle);
+                    controller.setMapStyle(MapStyles.darkMapStyle);
                   },
                   onCameraMove: (CameraPosition position) {
                     // Update zoom level and markers
