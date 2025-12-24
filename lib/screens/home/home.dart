@@ -9,6 +9,7 @@ import 'package:explorify/screens/mainwrapper/main_wrapper_controller.dart';
 import 'package:explorify/screens/notifications/notifications_screen.dart';
 import 'package:explorify/screens/search/search_screen.dart';
 import 'package:explorify/services/chat_service.dart';
+import 'package:explorify/services/notification_service.dart';
 import 'package:explorify/controllers/chat_controller.dart';
 import 'package:explorify/models/tour.dart';
 import 'package:explorify/utils/AppColors.dart';
@@ -27,6 +28,201 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final HomeController homeController = Get.put(HomeController());
   final AuthController authController = Get.find<AuthController>();
+  final NotificationService notificationService = Get.find<NotificationService>();
+
+  @override
+  void initState() {
+    super.initState();
+    // Check and show notification permission prompt on first launch
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndShowNotificationPrompt();
+    });
+  }
+
+  Future<void> _checkAndShowNotificationPrompt() async {
+    final shouldShow = await notificationService.shouldShowFirstTimePrompt();
+    if (shouldShow && mounted) {
+      // Small delay to let the home screen render first
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (mounted) {
+        _showNotificationPermissionDialog();
+      }
+    }
+  }
+
+  Future<void> _showNotificationPermissionDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          contentPadding: EdgeInsets.zero,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: AppColors.primary1.withOpacity(0.1),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary1,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.notifications_active,
+                        color: Colors.white,
+                        size: 32,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Stay Updated',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textprimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Never miss important updates',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textsecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    _buildNotificationBenefitItem(
+                      Icons.chat_bubble_outline,
+                      'New Messages',
+                      'Get notified instantly when you receive messages',
+                    ),
+                    const SizedBox(height: 16),
+                    _buildNotificationBenefitItem(
+                      Icons.calendar_today_outlined,
+                      'Booking Updates',
+                      'Confirmations, reminders and changes',
+                    ),
+                    const SizedBox(height: 16),
+                    _buildNotificationBenefitItem(
+                      Icons.local_offer_outlined,
+                      'Exclusive Offers',
+                      'Be the first to know about deals',
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary1,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Enable Notifications',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: Text(
+                        'Maybe Later',
+                        style: TextStyle(
+                          color: AppColors.textsecondary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    // Mark prompt as shown regardless of choice
+    await notificationService.markPromptAsShown();
+
+    // If user chose to enable, request permissions
+    if (result == true) {
+      await notificationService.enableNotifications();
+    }
+  }
+
+  Widget _buildNotificationBenefitItem(IconData icon, String title, String subtitle) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: AppColors.primary1.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            icon,
+            color: AppColors.primary1,
+            size: 22,
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textprimary,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textsecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
   String _getInitials() {
     final name = authController.userName;

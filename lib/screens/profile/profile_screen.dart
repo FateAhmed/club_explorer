@@ -8,6 +8,7 @@ import 'package:explorify/screens/auth/login.dart';
 import 'package:explorify/screens/booking/my_bookings_screen.dart';
 import 'package:explorify/screens/home/web_widget/web_widget.dart';
 import 'package:explorify/screens/profile/edit_profile_screen.dart';
+import 'package:explorify/services/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -20,6 +21,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final AuthController authController = Get.find<AuthController>();
+  final NotificationService notificationService = Get.find<NotificationService>();
 
   String _getInitials() {
     final name = authController.userName;
@@ -155,6 +157,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   child: Column(
                     children: [
+                      _buildNotificationToggle(),
+                      _buildDivider(),
                       _buildSettingsItem(
                         icon: Icons.lock_outline,
                         title: 'Privacy & Security',
@@ -340,6 +344,298 @@ class _ProfileScreenState extends State<ProfileScreen> {
         color: AppColors.grey200,
         height: 1,
       ),
+    );
+  }
+
+  Widget _buildNotificationToggle() {
+    return Padding(
+      padding: AppDimens.padding20,
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.primary1.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.notifications_outlined,
+              color: AppColors.primary1,
+              size: 24,
+            ),
+          ),
+          AppDimens.sizebox15,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Push Notifications',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textprimary,
+                  ),
+                ),
+                AppDimens.sizebox5,
+                Text(
+                  'Receive chat and booking updates',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textsecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Obx(() {
+            if (notificationService.isLoading.value) {
+              return SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.primary1,
+                ),
+              );
+            }
+            return Switch.adaptive(
+              value: notificationService.isNotificationsEnabled.value,
+              onChanged: (value) => _handleNotificationToggle(value),
+              activeColor: AppColors.primary1,
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleNotificationToggle(bool enable) async {
+    if (enable) {
+      // Show explanation dialog before requesting permission
+      final shouldEnable = await _showNotificationPermissionDialog();
+      if (shouldEnable) {
+        final success = await notificationService.enableNotifications();
+        if (!success && mounted) {
+          _showPermissionDeniedDialog();
+        }
+      }
+    } else {
+      await notificationService.disableNotifications();
+    }
+  }
+
+  Future<bool> _showNotificationPermissionDialog() async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          contentPadding: EdgeInsets.zero,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: AppColors.primary1.withOpacity(0.1),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary1,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.notifications_active,
+                        color: Colors.white,
+                        size: 32,
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Stay Updated',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textprimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    _buildBenefitItem(
+                      Icons.chat_bubble_outline,
+                      'New Messages',
+                      'Get notified when you receive messages',
+                    ),
+                    SizedBox(height: 12),
+                    _buildBenefitItem(
+                      Icons.calendar_today_outlined,
+                      'Booking Updates',
+                      'Confirmations and reminders',
+                    ),
+                    SizedBox(height: 12),
+                    _buildBenefitItem(
+                      Icons.local_offer_outlined,
+                      'Special Offers',
+                      'Exclusive deals and promotions',
+                    ),
+                    SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                side: BorderSide(color: AppColors.grey300),
+                              ),
+                            ),
+                            child: Text(
+                              'Not Now',
+                              style: TextStyle(
+                                color: AppColors.textsecondary,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary1,
+                              padding: EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: Text(
+                              'Enable',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    ) ?? false;
+  }
+
+  Widget _buildBenefitItem(IconData icon, String title, String subtitle) {
+    return Row(
+      children: [
+        Container(
+          padding: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.primary1.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            color: AppColors.primary1,
+            size: 20,
+          ),
+        ),
+        SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textprimary,
+                ),
+              ),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textsecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showPermissionDeniedDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.notifications_off, color: AppColors.error),
+              SizedBox(width: 10),
+              Text(
+                'Permission Required',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textprimary,
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            'To receive notifications, please enable them in your device settings.',
+            style: TextStyle(
+              fontSize: 15,
+              color: AppColors.textsecondary,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'OK',
+                style: TextStyle(
+                  color: AppColors.primary1,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
