@@ -13,6 +13,9 @@ class SearchField extends StatelessWidget {
   final double? dynamicwidth;
   final double? postIconPadding;
   final Color? color;
+  final TextEditingController? controller;
+  final ValueChanged<String>? onChanged;
+  final VoidCallback? onClear;
 
   const SearchField({
     super.key,
@@ -26,47 +29,68 @@ class SearchField extends StatelessWidget {
     required this.onpress,
     this.posticon,
     this.preicon,
+    this.controller,
+    this.onChanged,
+    this.onClear,
   });
   @override
   Widget build(BuildContext context) {
+    final hasText = controller?.text.isNotEmpty ?? false;
+
     return TextField(
+      controller: controller,
+      onChanged: onChanged,
       decoration: InputDecoration(
         hintText: text,
-        hintStyle: TextStyle(color: AppColors.grey, fontWeight: FontWeight.bold),
+        hintStyle: TextStyle(color: AppColors.grey, fontWeight: FontWeight.w500),
         prefixIcon: preicon != null
             ? Padding(
                 padding: const EdgeInsets.all(12.0),
                 child: preicon,
               )
             : null,
-        suffixIcon: GestureDetector(
-          onTap: onpress,
-          child: Padding(
-            padding: EdgeInsets.all(postIconPadding ?? 4.0),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  height: 24,
-                  width: 1,
-                  color: AppColors.grey,
-                  margin: EdgeInsets.only(right: 4), // Space between divider and icon
+        suffixIcon: hasText && onClear != null
+            ? GestureDetector(
+                onTap: onClear,
+                child: Padding(
+                  padding: EdgeInsets.all(postIconPadding ?? 12.0),
+                  child: Icon(
+                    Icons.close,
+                    color: AppColors.grey,
+                    size: 20,
+                  ),
                 ),
-                posticon ?? SizedBox(),
-              ],
-            ),
-          ),
-        ),
+              )
+            : (posticon != null
+                ? GestureDetector(
+                    onTap: onpress,
+                    child: Padding(
+                      padding: EdgeInsets.all(postIconPadding ?? 4.0),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            height: 24,
+                            width: 1,
+                            color: AppColors.grey,
+                            margin: EdgeInsets.only(right: 4),
+                          ),
+                          posticon ?? SizedBox(),
+                        ],
+                      ),
+                    ),
+                  )
+                : null),
         filled: true,
         fillColor: color ?? AppColors.white,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         enabledBorder: OutlineInputBorder(
           borderRadius: radius ?? BorderRadius.circular(25),
-          borderSide: BorderSide(color: AppColors.grey400), // ✅ Your custom color
+          borderSide: BorderSide(color: AppColors.grey400),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: radius ?? BorderRadius.circular(25),
-          borderSide: BorderSide(color: AppColors.grey, width: 2), // Optional bold focus
+          borderSide: BorderSide(color: AppColors.primary1, width: 1.5),
         ),
         border: OutlineInputBorder(
           borderRadius: radius ?? BorderRadius.circular(25),

@@ -19,6 +19,8 @@ class MessagesScreen extends StatefulWidget {
 class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late ChatController chatController;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -30,10 +32,45 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
     WidgetsBinding.instance.addPostFrameCallback((_) {
       chatController.loadUserChats();
     });
+
+    // Listen to search changes
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  void _onSearchChanged() {
+    setState(() {
+      _searchQuery = _searchController.text.toLowerCase().trim();
+    });
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    setState(() {
+      _searchQuery = '';
+    });
+  }
+
+  /// Filter chats based on search query
+  List<Chat> _filterChats(List<Chat> chats) {
+    if (_searchQuery.isEmpty) return chats;
+
+    return chats.where((chat) {
+      // Search by chat name
+      if (chat.name.toLowerCase().contains(_searchQuery)) return true;
+
+      // Search by last message content
+      if (chat.lastMessage?.content.toLowerCase().contains(_searchQuery) ?? false) {
+        return true;
+      }
+
+      return false;
+    }).toList();
   }
 
   @override
   void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
     _tabController.dispose();
     super.dispose();
   }
@@ -66,15 +103,14 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
                 children: [
                   AppDimens.sizebox10,
                   SearchField(
-                    color: AppColors.white.withValues(alpha: 0.1),
-                    text: 'Search chats',
+                    controller: _searchController,
+                    onChanged: (_) => _onSearchChanged(),
+                    onClear: _clearSearch,
+                    color: AppColors.white,
+                    text: 'Search chats...',
                     onpress: () {},
                     preicon: Icon(
                       CupertinoIcons.search,
-                      color: AppColors.grey,
-                    ),
-                    posticon: Icon(
-                      CupertinoIcons.slider_horizontal_3,
                       color: AppColors.grey,
                     ),
                   ),
@@ -139,10 +175,11 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
 
   Widget _buildChatList({required bool isGroupChat}) {
     return Obx(() {
-      final chats = isGroupChat ? chatController.groupChats : chatController.privateChats;
+      final allChats = isGroupChat ? chatController.groupChats : chatController.privateChats;
+      final chats = _filterChats(allChats);
 
       // Only show loading if we have no cached data
-      if (chatController.isLoading && chats.isEmpty) {
+      if (chatController.isLoading && allChats.isEmpty) {
         return Center(
           child: CircularProgressIndicator(
             color: AppColors.primary1,
@@ -150,7 +187,8 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
         );
       }
 
-      if (chats.isEmpty) {
+      // No chats at all
+      if (allChats.isEmpty) {
         return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -177,6 +215,39 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
                   color: AppColors.grey,
                 ),
                 textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        );
+      }
+
+      // No search results
+      if (chats.isEmpty && _searchQuery.isNotEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                CupertinoIcons.search,
+                size: 64,
+                color: AppColors.grey,
+              ),
+              AppDimens.sizebox10,
+              Text(
+                'No results found',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: AppColors.grey,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              AppDimens.sizebox5,
+              Text(
+                'Try a different search term',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.grey,
+                ),
               ),
             ],
           ),
