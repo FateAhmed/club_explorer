@@ -1,4 +1,4 @@
-package com.example.explorify
+package com.explorify.app
 
 import io.flutter.embedding.android.FlutterActivity
 
