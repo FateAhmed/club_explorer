@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 import '../models/chat_models.dart';
 import '../services/chat_service.dart';
 import '../services/websocket_service.dart';
+import '../services/notification_service.dart';
 import '../controllers/auth_controller.dart';
 import '../config/api_config.dart';
 
@@ -459,6 +460,11 @@ class ChatRepository extends GetxService {
 
     _currentChatId = chatId;
 
+    // Notify notification service to suppress notifications for this chat
+    if (Get.isRegistered<NotificationService>()) {
+      NotificationService.instance.setCurrentViewingChat(chatId);
+    }
+
     // Load messages FIRST (important to prevent race conditions)
     await loadMessages(chatId);
 
@@ -477,6 +483,11 @@ class ChatRepository extends GetxService {
       _messages.clear();
       _messageIds.clear();
       _localIdToServerId.clear();
+
+      // Notify notification service to allow notifications again
+      if (Get.isRegistered<NotificationService>()) {
+        NotificationService.instance.setCurrentViewingChat(null);
+      }
     }
   }
 

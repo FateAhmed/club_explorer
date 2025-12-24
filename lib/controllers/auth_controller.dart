@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import '../controllers/chat_controller.dart';
+import '../services/notification_service.dart';
 
 class AuthController extends GetxController {
   // Observable state
@@ -59,10 +60,12 @@ class AuthController extends GetxController {
     if (accessToken.value.isEmpty) return false;
 
     try {
-      final response = await http.get(
-        Uri.parse('${ApiConfig.users}/profile'),
-        headers: _authHeaders,
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .get(
+            Uri.parse('${ApiConfig.users}/profile'),
+            headers: _authHeaders,
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -101,9 +104,9 @@ class AuthController extends GetxController {
 
   /// Get auth headers for API requests
   Map<String, String> get _authHeaders => {
-    'Content-Type': 'application/json',
-    if (accessToken.value.isNotEmpty) 'Authorization': 'Bearer ${accessToken.value}',
-  };
+        'Content-Type': 'application/json',
+        if (accessToken.value.isNotEmpty) 'Authorization': 'Bearer ${accessToken.value}',
+      };
 
   /// Login with email and password
   Future<bool> login(String email, String password) async {
@@ -111,14 +114,16 @@ class AuthController extends GetxController {
       isLoading.value = true;
       errorMessage.value = '';
 
-      final response = await http.post(
-        Uri.parse('${ApiConfig.auth}/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email.trim().toLowerCase(),
-          'password': password,
-        }),
-      ).timeout(const Duration(seconds: 30));
+      final response = await http
+          .post(
+            Uri.parse('${ApiConfig.auth}/login'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'email': email.trim().toLowerCase(),
+              'password': password,
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
 
       final data = jsonDecode(response.body);
 
@@ -158,11 +163,13 @@ class AuthController extends GetxController {
       if (phone != null && phone.isNotEmpty) body['phone'] = phone.trim();
       if (address != null && address.isNotEmpty) body['address'] = address.trim();
 
-      final response = await http.post(
-        Uri.parse('${ApiConfig.auth}/register'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(body),
-      ).timeout(const Duration(seconds: 30));
+      final response = await http
+          .post(
+            Uri.parse('${ApiConfig.auth}/register'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 30));
 
       final data = jsonDecode(response.body);
 
@@ -187,11 +194,13 @@ class AuthController extends GetxController {
       isLoading.value = true;
       errorMessage.value = '';
 
-      final response = await http.post(
-        Uri.parse('${ApiConfig.auth}/google'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'token': token}),
-      ).timeout(const Duration(seconds: 30));
+      final response = await http
+          .post(
+            Uri.parse('${ApiConfig.auth}/google'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'token': token}),
+          )
+          .timeout(const Duration(seconds: 30));
 
       final data = jsonDecode(response.body);
 
@@ -215,11 +224,13 @@ class AuthController extends GetxController {
     if (refreshToken.value.isEmpty) return false;
 
     try {
-      final response = await http.post(
-        Uri.parse('${ApiConfig.auth}/refresh-token'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'refreshToken': refreshToken.value}),
-      ).timeout(const Duration(seconds: 15));
+      final response = await http
+          .post(
+            Uri.parse('${ApiConfig.auth}/refresh-token'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'refreshToken': refreshToken.value}),
+          )
+          .timeout(const Duration(seconds: 15));
 
       final data = jsonDecode(response.body);
 
@@ -242,11 +253,13 @@ class AuthController extends GetxController {
       isLoading.value = true;
       errorMessage.value = '';
 
-      final response = await http.post(
-        Uri.parse('${ApiConfig.auth}/reset-password'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email.trim().toLowerCase()}),
-      ).timeout(const Duration(seconds: 30));
+      final response = await http
+          .post(
+            Uri.parse('${ApiConfig.auth}/reset-password'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'email': email.trim().toLowerCase()}),
+          )
+          .timeout(const Duration(seconds: 30));
 
       final data = jsonDecode(response.body);
 
@@ -270,14 +283,16 @@ class AuthController extends GetxController {
       isLoading.value = true;
       errorMessage.value = '';
 
-      final response = await http.post(
-        Uri.parse('${ApiConfig.auth}/update-password'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'token': token,
-          'newPassword': newPassword,
-        }),
-      ).timeout(const Duration(seconds: 30));
+      final response = await http
+          .post(
+            Uri.parse('${ApiConfig.auth}/update-password'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'token': token,
+              'newPassword': newPassword,
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
 
       final data = jsonDecode(response.body);
 
@@ -310,11 +325,13 @@ class AuthController extends GetxController {
       if (phone != null) body['phone'] = phone.trim();
       if (address != null) body['address'] = address.trim();
 
-      final response = await http.put(
-        Uri.parse('${ApiConfig.users}/profile'),
-        headers: _authHeaders,
-        body: jsonEncode(body),
-      ).timeout(const Duration(seconds: 30));
+      final response = await http
+          .put(
+            Uri.parse('${ApiConfig.users}/profile'),
+            headers: _authHeaders,
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 30));
 
       final data = jsonDecode(response.body);
 
@@ -343,14 +360,16 @@ class AuthController extends GetxController {
       isLoading.value = true;
       errorMessage.value = '';
 
-      final response = await http.put(
-        Uri.parse('${ApiConfig.users}/password'),
-        headers: _authHeaders,
-        body: jsonEncode({
-          'currentPassword': currentPassword,
-          'newPassword': newPassword,
-        }),
-      ).timeout(const Duration(seconds: 30));
+      final response = await http
+          .put(
+            Uri.parse('${ApiConfig.users}/password'),
+            headers: _authHeaders,
+            body: jsonEncode({
+              'currentPassword': currentPassword,
+              'newPassword': newPassword,
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
 
       final data = jsonDecode(response.body);
 
@@ -370,6 +389,11 @@ class AuthController extends GetxController {
 
   /// Logout and clear all auth data
   Future<void> logout() async {
+    // Clear FCM token before logging out
+    if (Get.isRegistered<NotificationService>()) {
+      await NotificationService.instance.clearToken();
+    }
+
     await _clearAuthData();
   }
 
@@ -382,6 +406,11 @@ class AuthController extends GetxController {
 
     // Initialize chat system for logged-in user
     _initializeChatController();
+
+    // Register FCM token for push notifications
+    if (Get.isRegistered<NotificationService>()) {
+      NotificationService.instance.registerToken();
+    }
   }
 
   /// Handle authentication errors
@@ -491,9 +520,11 @@ class AuthController extends GetxController {
       case 'GET':
         return await http.get(Uri.parse(url), headers: _authHeaders);
       case 'POST':
-        return await http.post(Uri.parse(url), headers: _authHeaders, body: body != null ? jsonEncode(body) : null);
+        return await http.post(Uri.parse(url),
+            headers: _authHeaders, body: body != null ? jsonEncode(body) : null);
       case 'PUT':
-        return await http.put(Uri.parse(url), headers: _authHeaders, body: body != null ? jsonEncode(body) : null);
+        return await http.put(Uri.parse(url),
+            headers: _authHeaders, body: body != null ? jsonEncode(body) : null);
       case 'DELETE':
         return await http.delete(Uri.parse(url), headers: _authHeaders);
       default:
@@ -547,11 +578,13 @@ class AuthController extends GetxController {
         final imageUrl = data['data']['url'] as String;
 
         // Update profile with the new image URL
-        final profileUpdateResponse = await http.put(
-          Uri.parse('${ApiConfig.users}/profile'),
-          headers: _authHeaders,
-          body: jsonEncode({'profileImage': imageUrl}),
-        ).timeout(const Duration(seconds: 30));
+        final profileUpdateResponse = await http
+            .put(
+              Uri.parse('${ApiConfig.users}/profile'),
+              headers: _authHeaders,
+              body: jsonEncode({'profileImage': imageUrl}),
+            )
+            .timeout(const Duration(seconds: 30));
 
         final profileData = jsonDecode(profileUpdateResponse.body);
 
@@ -589,11 +622,13 @@ class AuthController extends GetxController {
       isLoading.value = true;
       errorMessage.value = '';
 
-      final response = await http.put(
-        Uri.parse('${ApiConfig.users}/profile'),
-        headers: _authHeaders,
-        body: jsonEncode({'profileImage': null}),
-      ).timeout(const Duration(seconds: 30));
+      final response = await http
+          .put(
+            Uri.parse('${ApiConfig.users}/profile'),
+            headers: _authHeaders,
+            body: jsonEncode({'profileImage': null}),
+          )
+          .timeout(const Duration(seconds: 30));
 
       final data = jsonDecode(response.body);
 
