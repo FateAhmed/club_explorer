@@ -167,10 +167,6 @@ class ChatController extends GetxController {
     _repository.sendTypingIndicator(chatId, isTyping);
   }
 
-  void clearTyping() {
-    // Handled by repository
-  }
-
   // ============ UTILITIES ============
 
   /// Format time for display

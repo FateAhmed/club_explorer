@@ -295,9 +295,7 @@ class _InChatState extends State<InChat> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                query.isEmpty
-                                    ? 'No participants found'
-                                    : 'No results for "$query"',
+                                query.isEmpty ? 'No participants found' : 'No results for "$query"',
                                 style: TextStyle(color: Colors.grey[600]),
                               ),
                             ],
@@ -785,9 +783,8 @@ class _InChatState extends State<InChat> {
     final participant = _sessionController.participants.firstWhereOrNull(
       (p) => p.userId == message.senderId,
     );
-    final senderInitial = (message.senderName ?? 'U').isNotEmpty
-        ? (message.senderName ?? 'U')[0].toUpperCase()
-        : 'U';
+    final senderInitial =
+        (message.senderName ?? 'U').isNotEmpty ? (message.senderName ?? 'U')[0].toUpperCase() : 'U';
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -795,9 +792,8 @@ class _InChatState extends State<InChat> {
         CircleAvatar(
           radius: 16,
           backgroundColor: AppColors.primary1,
-          backgroundImage: participant?.hasProfileImage == true
-              ? NetworkImage(participant!.profileImage!)
-              : null,
+          backgroundImage:
+              participant?.hasProfileImage == true ? NetworkImage(participant!.profileImage!) : null,
           child: participant?.hasProfileImage != true
               ? Text(
                   senderInitial,
