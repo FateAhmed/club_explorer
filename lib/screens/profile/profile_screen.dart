@@ -412,12 +412,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _handleNotificationToggle(bool enable) async {
     if (enable) {
+      // Check if permission was previously denied permanently
+      final isPermanentlyDenied = await notificationService.isPermissionDeniedPermanently();
+      if (isPermanentlyDenied) {
+        _showOpenSettingsDialog();
+        return;
+      }
+
       // Show explanation dialog before requesting permission
       final shouldEnable = await _showNotificationPermissionDialog();
       if (shouldEnable) {
         final success = await notificationService.enableNotifications();
         if (!success && mounted) {
-          _showPermissionDeniedDialog();
+          // Check if now permanently denied
+          final nowPermanentlyDenied = await notificationService.isPermissionDeniedPermanently();
+          if (nowPermanentlyDenied) {
+            _showOpenSettingsDialog();
+          } else {
+            _showPermissionDeniedDialog();
+          }
         }
       }
     } else {
@@ -604,18 +617,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               Icon(Icons.notifications_off, color: AppColors.error),
               SizedBox(width: 10),
-              Text(
-                'Permission Required',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textprimary,
+              Expanded(
+                child: Text(
+                  'Permission Required',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textprimary,
+                  ),
                 ),
               ),
             ],
           ),
           content: Text(
-            'To receive notifications, please enable them in your device settings.',
+            'To receive notifications, please allow notification permissions when prompted.',
             style: TextStyle(
               fontSize: 15,
               color: AppColors.textsecondary,
@@ -628,6 +643,74 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 'OK',
                 style: TextStyle(
                   color: AppColors.primary1,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showOpenSettingsDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.settings, color: AppColors.primary1),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Enable in Settings',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textprimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            'Notification permission was previously denied. Please enable notifications in your device settings to receive updates.',
+            style: TextStyle(
+              fontSize: 15,
+              color: AppColors.textsecondary,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: AppColors.textsecondary,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                notificationService.openNotificationSettings();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary1,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                'Open Settings',
+                style: TextStyle(
+                  color: Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),

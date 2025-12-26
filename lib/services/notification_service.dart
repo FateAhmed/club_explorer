@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:app_settings/app_settings.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -36,6 +37,7 @@ class NotificationService extends GetxService {
   // Observable state for UI
   final RxBool isNotificationsEnabled = false.obs;
   final RxBool isPermissionGranted = false.obs;
+  final RxBool isPermissionPermanentlyDenied = false.obs;
   final RxBool isLoading = false.obs;
 
   // Current viewing chat ID (to suppress notifications)
@@ -99,6 +101,8 @@ class NotificationService extends GetxService {
     isPermissionGranted.value =
         settings.authorizationStatus == AuthorizationStatus.authorized ||
         settings.authorizationStatus == AuthorizationStatus.provisional;
+    isPermissionPermanentlyDenied.value =
+        settings.authorizationStatus == AuthorizationStatus.denied;
   }
 
   /// Initialize local notifications plugin
@@ -206,14 +210,20 @@ class NotificationService extends GetxService {
     try {
       final authController = Get.find<AuthController>();
       if (!authController.isLoggedIn) {
-        print('Not logged in, skipping FCM token registration');
+        print('FCM: Not logged in, skipping token registration');
         return;
       }
 
       final deviceId = await _getDeviceId();
+      final url = '${ApiConfig.users}/fcm-token';
+
+      print('FCM: Sending token to server...');
+      print('FCM: URL: $url');
+      print('FCM: Platform: ${Platform.isIOS ? 'ios' : 'android'}');
+      print('FCM: DeviceId: $deviceId');
 
       final response = await http.post(
-        Uri.parse('${ApiConfig.users}/fcm-token'),
+        Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${authController.token}',
@@ -225,15 +235,18 @@ class NotificationService extends GetxService {
         }),
       );
 
+      print('FCM: Response status: ${response.statusCode}');
+      print('FCM: Response body: ${response.body}');
+
       if (response.statusCode == 200) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool(_fcmTokenSentKey, true);
-        print('FCM token registered successfully');
+        print('FCM: Token registered successfully');
       } else {
-        print('Failed to register FCM token: ${response.statusCode}');
+        print('FCM: Failed to register token: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
-      print('Error registering FCM token: $e');
+      print('FCM: Error registering token: $e');
     }
   }
 
@@ -468,15 +481,19 @@ class NotificationService extends GetxService {
 
   /// Enable notifications - requests permission if needed and registers token
   Future<bool> enableNotifications() async {
+    print('FCM: enableNotifications called');
     isLoading.value = true;
 
     try {
       // Check current permission status
       await _checkPermissionStatus();
+      print('FCM: Permission granted: ${isPermissionGranted.value}');
 
       // Request permission if not already granted
       if (!isPermissionGranted.value) {
+        print('FCM: Requesting permission...');
         final granted = await _requestPermissions();
+        print('FCM: Permission request result: $granted');
         if (!granted) {
           isLoading.value = false;
           return false;
@@ -487,15 +504,16 @@ class NotificationService extends GetxService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_notificationsEnabledKey, true);
       isNotificationsEnabled.value = true;
+      print('FCM: Preference saved, setting up token listener...');
 
       // Register FCM token
       await _setupTokenRefreshListener();
 
-      print('Notifications enabled successfully');
+      print('FCM: Notifications enabled successfully');
       isLoading.value = false;
       return true;
     } catch (e) {
-      print('Error enabling notifications: $e');
+      print('FCM: Error enabling notifications: $e');
       isLoading.value = false;
       return false;
     }
@@ -542,16 +560,32 @@ class NotificationService extends GetxService {
 
   /// Open app notification settings (for when permission is denied)
   Future<void> openNotificationSettings() async {
-    await _localNotifications
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.requestNotificationsPermission();
-    // For iOS, user needs to go to Settings app manually
-    // We can show a dialog directing them there
+    await AppSettings.openAppSettings(type: AppSettingsType.notification);
+  }
+
+  /// Check if permission was permanently denied and needs settings redirect
+  Future<bool> isPermissionDeniedPermanently() async {
+    await _checkPermissionStatus();
+    return isPermissionPermanentlyDenied.value;
   }
 
   /// Check if first-time notification prompt should be shown
+  /// Only returns true if:
+  /// - User is logged in
+  /// - Prompt hasn't been shown before
+  /// - Notifications are not already enabled
   Future<bool> shouldShowFirstTimePrompt() async {
+    // Check if user is logged in
+    try {
+      final authController = Get.find<AuthController>();
+      if (!authController.isLoggedIn) {
+        return false;
+      }
+    } catch (e) {
+      // AuthController not found
+      return false;
+    }
+
     final prefs = await SharedPreferences.getInstance();
     final hasShown = prefs.getBool(_notificationPromptShownKey) ?? false;
     return !hasShown && !isNotificationsEnabled.value;

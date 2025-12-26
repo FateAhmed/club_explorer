@@ -33,20 +33,24 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    // Check and show notification permission prompt on first launch
+    // Check and show notification permission prompt after home screen is fully loaded
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAndShowNotificationPrompt();
     });
   }
 
   Future<void> _checkAndShowNotificationPrompt() async {
+    // Wait for home screen to fully render and data to load
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (!mounted) return;
+
+    // Check if user is logged in and prompt should be shown
+    if (!authController.isLoggedIn) return;
+
     final shouldShow = await notificationService.shouldShowFirstTimePrompt();
     if (shouldShow && mounted) {
-      // Small delay to let the home screen render first
-      await Future.delayed(const Duration(milliseconds: 500));
-      if (mounted) {
-        _showNotificationPermissionDialog();
-      }
+      _showNotificationPermissionDialog();
     }
   }
 
@@ -177,8 +181,83 @@ class _HomePageState extends State<HomePage> {
 
     // If user chose to enable, request permissions
     if (result == true) {
-      await notificationService.enableNotifications();
+      final success = await notificationService.enableNotifications();
+      if (!success && mounted) {
+        // Check if permanently denied
+        final isPermanentlyDenied = await notificationService.isPermissionDeniedPermanently();
+        if (isPermanentlyDenied) {
+          _showOpenSettingsDialog();
+        }
+      }
     }
+  }
+
+  void _showOpenSettingsDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.settings, color: AppColors.primary1),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Enable in Settings',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textprimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            'Notification permission was denied. Please enable notifications in your device settings.',
+            style: TextStyle(
+              fontSize: 15,
+              color: AppColors.textsecondary,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Later',
+                style: TextStyle(
+                  color: AppColors.textsecondary,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                notificationService.openNotificationSettings();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary1,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                'Open Settings',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildNotificationBenefitItem(IconData icon, String title, String subtitle) {
