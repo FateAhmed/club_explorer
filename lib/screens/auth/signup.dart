@@ -21,6 +21,10 @@ class _CreateAccountState extends State<CreateAccount> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passController = TextEditingController();
   final TextEditingController confirmPassController = TextEditingController();
+  final FocusNode _nameFocusNode = FocusNode();
+  final FocusNode _emailFocusNode = FocusNode();
+  final FocusNode _passFocusNode = FocusNode();
+  final FocusNode _confirmPassFocusNode = FocusNode();
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final AuthController authController = Get.find<AuthController>();
   bool isObsecure = true;
@@ -38,6 +42,10 @@ class _CreateAccountState extends State<CreateAccount> {
     emailController.dispose();
     passController.dispose();
     confirmPassController.dispose();
+    _nameFocusNode.dispose();
+    _emailFocusNode.dispose();
+    _passFocusNode.dispose();
+    _confirmPassFocusNode.dispose();
     super.dispose();
   }
 
@@ -123,7 +131,7 @@ class _CreateAccountState extends State<CreateAccount> {
                     CustomTextFormField(
                       title: 'Enter your name',
                       controller: nameController,
-                      focusNode: FocusNode(),
+                      focusNode: _nameFocusNode,
                       validator: (e) => validateName(e),
                     ),
                     AppDimens.sizebox25,
@@ -141,7 +149,7 @@ class _CreateAccountState extends State<CreateAccount> {
                     CustomTextFormField(
                       title: 'Enter your email address',
                       controller: emailController,
-                      focusNode: FocusNode(),
+                      focusNode: _emailFocusNode,
                       validator: (e) => validateEmail(e),
                     ),
                     AppDimens.sizebox25,
@@ -168,7 +176,7 @@ class _CreateAccountState extends State<CreateAccount> {
                           });
                         },
                       ),
-                      focusNode: FocusNode(),
+                      focusNode: _passFocusNode,
                       validator: (e) => validatePassword(e),
                     ),
                     AppDimens.sizebox25,
@@ -195,7 +203,7 @@ class _CreateAccountState extends State<CreateAccount> {
                           });
                         },
                       ),
-                      focusNode: FocusNode(),
+                      focusNode: _confirmPassFocusNode,
                       validator: (e) {
                         if (e == null || e.isEmpty) {
                           return 'Please confirm your password';

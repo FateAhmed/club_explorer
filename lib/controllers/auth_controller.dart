@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -49,7 +50,7 @@ class AuthController extends GetxController {
         }
       }
     } catch (e) {
-      print('Auth initialization error: $e');
+      debugPrint('Auth initialization error: $e');
     } finally {
       isInitialized.value = true;
     }
@@ -90,7 +91,7 @@ class AuthController extends GetxController {
       }
       return false;
     } catch (e) {
-      print('Token validation error: $e');
+      debugPrint('Token validation error: $e');
       return false;
     }
   }
@@ -242,7 +243,7 @@ class AuthController extends GetxController {
       }
       return false;
     } catch (e) {
-      print('Token refresh error: $e');
+      debugPrint('Token refresh error: $e');
       return false;
     }
   }
@@ -432,7 +433,7 @@ class AuthController extends GetxController {
     } else {
       errorMessage.value = 'Network error. Please try again.';
     }
-    print('Network error: $e');
+    debugPrint('Network error: $e');
   }
 
   /// Clear all authentication data
@@ -477,7 +478,7 @@ class AuthController extends GetxController {
         profileImage.value = profileImageString;
       }
     } catch (e) {
-      print('Error loading user data: $e');
+      debugPrint('Error loading user data: $e');
     }
   }
 
@@ -489,7 +490,7 @@ class AuthController extends GetxController {
       await prefs.setString(_accessTokenKey, accessToken.value);
       await prefs.setString(_refreshTokenKey, refreshToken.value);
     } catch (e) {
-      print('Error saving user data: $e');
+      debugPrint('Error saving user data: $e');
     }
   }
 
@@ -608,7 +609,7 @@ class AuthController extends GetxController {
         return null;
       }
     } catch (e) {
-      print('Error uploading profile image: $e');
+      debugPrint('Error uploading profile image: $e');
       errorMessage.value = 'Failed to upload image. Please try again.';
       return null;
     } finally {
@@ -645,7 +646,7 @@ class AuthController extends GetxController {
         return false;
       }
     } catch (e) {
-      print('Error removing profile image: $e');
+      debugPrint('Error removing profile image: $e');
       errorMessage.value = 'Failed to remove image. Please try again.';
       return false;
     } finally {

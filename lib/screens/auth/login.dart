@@ -21,6 +21,8 @@ class Login extends StatefulWidget {
 class _LoginState extends State<Login> {
   TextEditingController cEmailController = TextEditingController();
   TextEditingController cPassController = TextEditingController();
+  final FocusNode _emailFocusNode = FocusNode();
+  final FocusNode _passFocusNode = FocusNode();
   final formKey = GlobalKey<FormState>();
   bool isChecked = false;
   bool isObsecure = true;
@@ -37,6 +39,8 @@ class _LoginState extends State<Login> {
   void dispose() {
     cEmailController.dispose();
     cPassController.dispose();
+    _emailFocusNode.dispose();
+    _passFocusNode.dispose();
     super.dispose();
   }
 
@@ -88,7 +92,7 @@ class _LoginState extends State<Login> {
                     CustomTextFormField(
                       title: 'Enter your email address',
                       controller: cEmailController,
-                      focusNode: FocusNode(),
+                      focusNode: _emailFocusNode,
                       validator: (e) => validateEmail(e),
                     ),
 
@@ -114,7 +118,7 @@ class _LoginState extends State<Login> {
                           });
                         },
                       ),
-                      focusNode: FocusNode(),
+                      focusNode: _passFocusNode,
                       validator: (e) => validatePassword(e),
                     ),
                     Row(
