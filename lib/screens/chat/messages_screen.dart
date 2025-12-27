@@ -26,7 +26,7 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    chatController = Get.put(ChatController());
+    chatController = Get.find<ChatController>();
 
     // Load all chats when screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {

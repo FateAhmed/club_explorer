@@ -1,13 +1,14 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../models/chat_models.dart';
-import 'package:get/get.dart';
 
 /// Callback types for repository integration
 typedef OnMessageReceived = void Function(ChatMessage message, String? localId);
 typedef OnMessageError = void Function(String error, String? localId);
 typedef OnTypingIndicator = void Function(String userId, bool isTyping);
 typedef OnConnectionStatusChanged = void Function(bool isConnected);
+typedef OnChatNotification = void Function(Map<String, dynamic> data);
 
 class WebSocketService {
   static WebSocketService? _instance;
@@ -29,6 +30,7 @@ class WebSocketService {
   OnMessageError? onMessageError;
   OnTypingIndicator? onTypingIndicator;
   OnConnectionStatusChanged? onConnectionStatusChanged;
+  OnChatNotification? onChatNotification;
 
   // Singleton pattern
   static WebSocketService get instance {
@@ -68,8 +70,12 @@ class WebSocketService {
       _socket!.on('connect', (_) {
         _isConnected = true;
         _reconnectAttempts = 0;
-        print('Socket.IO connected successfully');
         onConnectionStatusChanged?.call(true);
+
+        // Authenticate to join user's notification room for realtime updates
+        if (_userId != null) {
+          _socket!.emit('authenticate', {'userId': _userId});
+        }
 
         // Rejoin current chat room if any
         if (_currentChatId != null) {
@@ -82,7 +88,7 @@ class WebSocketService {
       });
 
       _socket!.on('connect_error', (error) {
-        print('Socket.IO connection error: $error');
+        debugPrint('Socket.IO connection error: $error');
         _handleDisconnect();
       });
 
@@ -96,8 +102,9 @@ class WebSocketService {
       _socket!.on('user_joined', (data) => _handleUserJoined(data));
       _socket!.on('user_typing', (data) => _handleUserTyping(data));
       _socket!.on('messages_read', (data) => _handleMessagesRead(data));
+      _socket!.on('chat_notification', (data) => _handleChatNotification(data));
     } catch (e) {
-      print('Socket.IO connection error: $e');
+      debugPrint('Socket.IO connection error: $e');
       _isConnected = false;
       onConnectionStatusChanged?.call(false);
       _scheduleReconnect();
@@ -117,7 +124,6 @@ class WebSocketService {
       _isConnected = false;
       _currentChatId = null;
       onConnectionStatusChanged?.call(false);
-      print('Socket.IO disconnected');
     }
   }
 
@@ -158,7 +164,6 @@ class WebSocketService {
     String? localId,
   }) {
     if (!_isConnected || _socket == null) {
-      print('Socket.IO: Cannot send message - not connected');
       onMessageError?.call('Not connected to server', localId);
       return;
     }
@@ -199,7 +204,6 @@ class WebSocketService {
     try {
       final messageData = data['message'];
       if (messageData == null) {
-        print('Socket.IO: Received new_message with null message data');
         return;
       }
 
@@ -211,7 +215,7 @@ class WebSocketService {
         onMessageReceived!(message, localId);
       }
     } catch (e) {
-      print('Error handling new message: $e');
+      debugPrint('Error handling new message: $e');
     }
   }
 
@@ -221,19 +225,17 @@ class WebSocketService {
       final error = data['error'] as String? ?? 'Unknown error';
       final localId = data['localId'] as String?;
 
-      print('Socket.IO message error: $error (localId: $localId)');
-
       if (onMessageError != null) {
         onMessageError!(error, localId);
       }
     } catch (e) {
-      print('Error handling message error: $e');
+      debugPrint('Error handling message error: $e');
     }
   }
 
   // Handle user joined
   void _handleUserJoined(Map<String, dynamic> data) {
-    print('User ${data['userId']} joined chat ${data['chatId']}');
+    // User joined event received
   }
 
   // Handle user typing
@@ -248,27 +250,31 @@ class WebSocketService {
 
   // Handle messages read
   void _handleMessagesRead(Map<String, dynamic> data) {
-    print('Messages read by ${data['userId']} in chat ${data['chatId']}');
+    // Messages read event received
+  }
+
+  // Handle chat notification (for realtime updates on chat list)
+  void _handleChatNotification(dynamic data) {
+    if (data is Map<String, dynamic> && onChatNotification != null) {
+      onChatNotification!(data);
+    }
   }
 
   // Handle errors
   void _handleError(dynamic error) {
-    print('Socket.IO error: $error');
+    debugPrint('Socket.IO error: $error');
   }
 
   // Handle disconnection with exponential backoff
   void _handleDisconnect() {
     _isConnected = false;
     onConnectionStatusChanged?.call(false);
-    print('Socket.IO disconnected');
-
     _scheduleReconnect();
   }
 
   // Schedule reconnection with exponential backoff
   void _scheduleReconnect() {
     if (_reconnectAttempts >= _maxReconnectAttempts) {
-      print('Socket.IO: Max reconnection attempts reached');
       return;
     }
 
@@ -278,11 +284,8 @@ class WebSocketService {
     final delay = _calculateReconnectDelay();
     _reconnectAttempts++;
 
-    print('Socket.IO: Scheduling reconnect in ${delay}ms (attempt $_reconnectAttempts/$_maxReconnectAttempts)');
-
     _reconnectTimer = Timer(Duration(milliseconds: delay), () {
       if (_userId != null && _serverUrl != null) {
-        print('Socket.IO: Attempting to reconnect...');
         _connectInternal();
       }
     });

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:uuid/uuid.dart';
 import '../models/chat_models.dart';
@@ -121,7 +122,7 @@ class ChatRepository extends GetxService {
         _chatService.setAuthToken(authController.token);
       }
     } catch (e) {
-      print('ChatRepository: Error initializing from auth: $e');
+      debugPrint('ChatRepository: Error initializing from auth: $e');
     }
   }
 
@@ -137,7 +138,7 @@ class ChatRepository extends GetxService {
   /// Connect to WebSocket with proper user ID
   void connectWebSocket() {
     if (_currentUserId == null || _currentUserId!.isEmpty) {
-      print('ChatRepository: Cannot connect WebSocket - no user ID');
+      debugPrint('ChatRepository: Cannot connect WebSocket - no user ID');
       return;
     }
 
@@ -176,7 +177,7 @@ class ChatRepository extends GetxService {
       _updateUnreadCountsFromChats(chats);
     } catch (e) {
       _errorMessage.value = e.toString();
-      print('ChatRepository: Error loading chats: $e');
+      debugPrint('ChatRepository: Error loading chats: $e');
     } finally {
       _isLoadingChats.value = false;
     }
@@ -226,7 +227,7 @@ class ChatRepository extends GetxService {
       return chat;
     } catch (e) {
       _errorMessage.value = e.toString();
-      print('ChatRepository: Error creating private chat: $e');
+      debugPrint('ChatRepository: Error creating private chat: $e');
       return null;
     } finally {
       _isLoadingChats.value = false;
@@ -262,7 +263,7 @@ class ChatRepository extends GetxService {
       }
     } catch (e) {
       _errorMessage.value = e.toString();
-      print('ChatRepository: Error loading messages: $e');
+      debugPrint('ChatRepository: Error loading messages: $e');
     } finally {
       _isLoadingMessages.value = false;
     }
@@ -362,7 +363,7 @@ class ChatRepository extends GetxService {
       return optimisticMessage;
     } catch (e) {
       _errorMessage.value = e.toString();
-      print('ChatRepository: Error sending message: $e');
+      debugPrint('ChatRepository: Error sending message: $e');
       return null;
     } finally {
       _isSendingMessage.value = false;
@@ -445,7 +446,7 @@ class ChatRepository extends GetxService {
         }
       }
     } catch (e) {
-      print('ChatRepository: Error marking as read: $e');
+      debugPrint('ChatRepository: Error marking as read: $e');
     }
   }
 
@@ -505,6 +506,34 @@ class ChatRepository extends GetxService {
       _typingUsers[userId] = true;
     } else {
       _typingUsers.remove(userId);
+    }
+  }
+
+  // ============ NOTIFICATION UPDATES ============
+
+  /// Update unread count from notification (for realtime updates on chat list)
+  void updateUnreadCount(String chatId, int count) {
+    _unreadCounts[chatId] = count;
+    _updateTotalUnreadCount();
+  }
+
+  /// Update chat preview (last message) from notification
+  void updateChatPreview(String chatId, Map<String, dynamic> messageData) {
+    final index = _chats.indexWhere((c) => c.id == chatId);
+    if (index != -1) {
+      try {
+        final chat = _chats[index];
+        final message = ChatMessage.fromJson(messageData);
+        final updatedChat = chat.copyWith(
+          lastMessage: message,
+          lastActivity: message.createdAt,
+        );
+        // Remove and insert at top to reorder
+        _chats.removeAt(index);
+        _chats.insert(0, updatedChat);
+      } catch (e) {
+        debugPrint('ChatRepository: Error updating chat preview: $e');
+      }
     }
   }
 

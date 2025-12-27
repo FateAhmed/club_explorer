@@ -23,6 +23,7 @@ class InChat extends StatefulWidget {
 class _InChatState extends State<InChat> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final FocusNode _messageFocusNode = FocusNode();
   late ChatSessionController _sessionController;
 
   @override
@@ -43,6 +44,7 @@ class _InChatState extends State<InChat> {
     _textController.removeListener(_onTextChanged);
     _textController.dispose();
     _scrollController.dispose();
+    _messageFocusNode.dispose();
     // Delete session controller when leaving
     Get.deleteChatSession(widget.chatId);
     super.dispose();
@@ -671,6 +673,7 @@ class _InChatState extends State<InChat> {
         );
       }
 
+      final maxBubbleWidth = MediaQuery.of(context).size.width * 0.65;
       return ListView.builder(
         controller: _scrollController,
         reverse: true,
@@ -678,17 +681,18 @@ class _InChatState extends State<InChat> {
         itemCount: _sessionController.messages.length,
         itemBuilder: (context, index) {
           final message = _sessionController.messages[index];
-          return _buildMessageBubble(message);
+          return _buildMessageBubble(message, maxBubbleWidth, key: ValueKey(message.id ?? message.localId));
         },
       );
     });
   }
 
-  Widget _buildMessageBubble(ChatMessage message) {
+  Widget _buildMessageBubble(ChatMessage message, double maxBubbleWidth, {Key? key}) {
     final isSent = _sessionController.isOwnMessage(message);
 
     if (message.isDeleted) {
       return Container(
+        key: key,
         margin: const EdgeInsets.symmetric(vertical: 4),
         child: Text(
           'This message was deleted',
@@ -703,14 +707,15 @@ class _InChatState extends State<InChat> {
     }
 
     if (isSent) {
-      return _buildSentMessage(message);
+      return _buildSentMessage(message, maxBubbleWidth, key: key);
     } else {
-      return _buildReceivedMessage(message);
+      return _buildReceivedMessage(message, maxBubbleWidth, key: key);
     }
   }
 
-  Widget _buildSentMessage(ChatMessage message) {
+  Widget _buildSentMessage(ChatMessage message, double maxBubbleWidth, {Key? key}) {
     return Align(
+      key: key,
       alignment: Alignment.centerRight,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -719,10 +724,10 @@ class _InChatState extends State<InChat> {
             padding: const EdgeInsets.all(12),
             margin: const EdgeInsets.only(bottom: 8),
             constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * 0.65,
+              maxWidth: maxBubbleWidth,
             ),
             decoration: BoxDecoration(
-              color: message.isLocalOnly ? const Color(0xFFD6B45D).withOpacity(0.7) : const Color(0xFFD6B45D),
+              color: message.isLocalOnly ? const Color(0xFFD6B45D).withValues(alpha: 0.7) : const Color(0xFFD6B45D),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Text(
@@ -778,7 +783,7 @@ class _InChatState extends State<InChat> {
     );
   }
 
-  Widget _buildReceivedMessage(ChatMessage message) {
+  Widget _buildReceivedMessage(ChatMessage message, double maxBubbleWidth, {Key? key}) {
     // Find participant to get their profile image
     final participant = _sessionController.participants.firstWhereOrNull(
       (p) => p.userId == message.senderId,
@@ -787,6 +792,7 @@ class _InChatState extends State<InChat> {
         (message.senderName ?? 'U').isNotEmpty ? (message.senderName ?? 'U')[0].toUpperCase() : 'U';
 
     return Row(
+      key: key,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CircleAvatar(
@@ -813,7 +819,7 @@ class _InChatState extends State<InChat> {
               padding: const EdgeInsets.all(12),
               margin: const EdgeInsets.only(bottom: 8),
               constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 0.65,
+                maxWidth: maxBubbleWidth,
               ),
               decoration: BoxDecoration(
                 color: Colors.grey[200],
@@ -884,7 +890,7 @@ class _InChatState extends State<InChat> {
                 ),
               );
             }),
-            focusNode: FocusNode(),
+            focusNode: _messageFocusNode,
             validator: (e) => notEmpty(e),
           ),
         ),

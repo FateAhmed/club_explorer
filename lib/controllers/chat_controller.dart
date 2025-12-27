@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import '../models/chat_models.dart';
 import '../repository/chat_repository.dart';
@@ -5,14 +6,17 @@ import '../services/websocket_service.dart';
 import 'auth_controller.dart';
 
 /// Thin controller that delegates to ChatRepository
-/// Handles navigation and exposes repository state to UI
-class ChatController extends GetxController {
+/// Handles navigation, app lifecycle, and exposes repository state to UI
+class ChatController extends GetxController with WidgetsBindingObserver {
   late final ChatRepository _repository;
   final WebSocketService _webSocketService = WebSocketService.instance;
 
   @override
   void onInit() {
     super.onInit();
+    // Register app lifecycle observer
+    WidgetsBinding.instance.addObserver(this);
+
     // Initialize repository
     _repository = Get.put(ChatRepository());
 
@@ -21,6 +25,33 @@ class ChatController extends GetxController {
 
     // Initialize repository if user is logged in (defer to avoid setState during build)
     Future.microtask(() => _initializeIfLoggedIn());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      // App came back to foreground - refresh data and reconnect if needed
+      _onAppResumed();
+    }
+  }
+
+  void _onAppResumed() {
+    try {
+      final authController = Get.find<AuthController>();
+      if (!authController.isLoggedIn) return;
+
+      // Reconnect WebSocket if disconnected
+      if (!_webSocketService.isConnected) {
+        debugPrint('ChatController: App resumed, reconnecting WebSocket...');
+        _repository.initialize();
+      }
+
+      // Always refresh chat list to get latest messages and unread counts
+      _repository.loadUserChats();
+    } catch (e) {
+      debugPrint('ChatController: Error on app resume: $e');
+    }
   }
 
   void _setupWebSocketCallbacks() {
@@ -37,12 +68,34 @@ class ChatController extends GetxController {
     };
 
     _webSocketService.onConnectionStatusChanged = (isConnected) {
-      if (isConnected) {
-        print('ChatController: WebSocket connected');
-      } else {
-        print('ChatController: WebSocket disconnected');
-      }
+      // Connection status updates are handled internally
     };
+
+    _webSocketService.onChatNotification = (data) {
+      _handleChatNotification(data);
+    };
+  }
+
+  void _handleChatNotification(Map<String, dynamic> data) {
+    final type = data['type'] as String?;
+    final chatId = data['chatId'] as String?;
+
+    if (type == null || chatId == null) return;
+
+    switch (type) {
+      case 'new_message':
+        // Update unread count
+        final unreadCount = data['unreadCount'] as int?;
+        if (unreadCount != null) {
+          _repository.updateUnreadCount(chatId, unreadCount);
+        }
+        // Update last message preview
+        final messageData = data['message'] as Map<String, dynamic>?;
+        if (messageData != null) {
+          _repository.updateChatPreview(chatId, messageData);
+        }
+        break;
+    }
   }
 
   void _initializeIfLoggedIn() {
@@ -52,12 +105,20 @@ class ChatController extends GetxController {
         _repository.initialize();
       }
     } catch (e) {
-      print('ChatController: Error initializing: $e');
+      debugPrint('ChatController: Error initializing: $e');
     }
   }
 
   @override
   void onClose() {
+    // Remove lifecycle observer
+    WidgetsBinding.instance.removeObserver(this);
+    // Clear WebSocket callbacks
+    _webSocketService.onMessageReceived = null;
+    _webSocketService.onMessageError = null;
+    _webSocketService.onTypingIndicator = null;
+    _webSocketService.onConnectionStatusChanged = null;
+    _webSocketService.onChatNotification = null;
     _repository.clear();
     super.onClose();
   }
@@ -196,12 +257,10 @@ class ChatController extends GetxController {
   /// Test API connection (for debugging)
   Future<void> testApiConnection() async {
     try {
-      print('Testing API connection...');
       await _repository.loadUserChats();
-      print('API test successful: ${chats.length} chats found');
       Get.snackbar('Success', 'API connection successful!');
     } catch (e) {
-      print('API test failed: $e');
+      debugPrint('API test failed: $e');
       Get.snackbar('Error', 'API test failed: $e');
     }
   }
