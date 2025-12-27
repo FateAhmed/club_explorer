@@ -1,5 +1,6 @@
 import 'package:explorify/splash/splash.dart';
 import 'package:explorify/screens/mainwrapper/main_wrapper_controller.dart';
+import 'package:explorify/screens/home/home_controller.dart';
 import 'package:explorify/controllers/auth_controller.dart';
 import 'package:explorify/services/notification_service.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -17,6 +18,7 @@ void main() async {
   // Initialize controllers
   Get.put(AuthController(), permanent: true);
   Get.put(MainWrapperController());
+  Get.lazyPut(() => HomeController());
 
   // Initialize NotificationService (will setup FCM)
   await Get.putAsync(() => NotificationService().init(), permanent: true);
