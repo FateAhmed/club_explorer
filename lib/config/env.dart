@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 enum Environment { development, staging, production }
 
 class Env {
@@ -5,14 +7,17 @@ class Env {
   factory Env() => _instance;
   Env._internal();
 
-  Environment _environment = Environment.production;
+  Environment _environment = Environment.development;
+
+  // Localhost for emulators: Android uses 10.0.2.2, iOS uses localhost
+  static String get _localhost => Platform.isAndroid ? '10.0.2.2' : 'localhost';
 
   // URLs per environment
-  static const _config = {
+  static Map<Environment, Map<String, String>> get _config => {
     Environment.development: {
-      'apiUrl': 'http://localhost:7043',
-      'wsUrl': 'ws://localhost:7043',
-      'webUrl': 'http://localhost:3000',
+      'apiUrl': 'http://$_localhost:7043',
+      'wsUrl': 'ws://$_localhost:7043',
+      'webUrl': 'http://$_localhost:3000',
     },
     Environment.staging: {
       'apiUrl': 'https://club-explorer.ahmadt.com',
