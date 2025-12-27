@@ -13,12 +13,13 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  final TourSearchController searchController = Get.put(TourSearchController());
+  late final TourSearchController searchController;
   final FocusNode _searchFocusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
+    searchController = Get.put(TourSearchController(), tag: 'search_${hashCode}');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _searchFocusNode.requestFocus();
     });
@@ -27,6 +28,7 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void dispose() {
     _searchFocusNode.dispose();
+    Get.delete<TourSearchController>(tag: 'search_${hashCode}');
     super.dispose();
   }
 
