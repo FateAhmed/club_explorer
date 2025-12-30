@@ -7,29 +7,29 @@ class Env {
   factory Env() => _instance;
   Env._internal();
 
-  Environment _environment = Environment.development;
+  Environment _environment = Environment.production;
 
   // Localhost for emulators: Android uses 10.0.2.2, iOS uses localhost
   static String get _localhost => Platform.isAndroid ? '10.0.2.2' : 'localhost';
 
   // URLs per environment
   static Map<Environment, Map<String, String>> get _config => {
-    Environment.development: {
-      'apiUrl': 'http://$_localhost:7043',
-      'wsUrl': 'ws://$_localhost:7043',
-      'webUrl': 'http://$_localhost:3000',
-    },
-    Environment.staging: {
-      'apiUrl': 'https://club-explorer.ahmadt.com',
-      'wsUrl': 'wss://club-explorer.ahmadt.com',
-      'webUrl': 'https://explorifymotorcycle.com',
-    },
-    Environment.production: {
-      'apiUrl': 'https://club-explorer.ahmadt.com',
-      'wsUrl': 'wss://club-explorer.ahmadt.com',
-      'webUrl': 'https://explorifymotorcycle.com',
-    },
-  };
+        Environment.development: {
+          'apiUrl': 'http://$_localhost:7043',
+          'wsUrl': 'ws://$_localhost:7043',
+          'webUrl': 'http://$_localhost:3000',
+        },
+        Environment.staging: {
+          'apiUrl': 'https://club-explorer.ahmadt.com',
+          'wsUrl': 'wss://club-explorer.ahmadt.com',
+          'webUrl': 'https://explorifymotorcycle.com',
+        },
+        Environment.production: {
+          'apiUrl': 'https://club-explorer.ahmadt.com',
+          'wsUrl': 'wss://club-explorer.ahmadt.com',
+          'webUrl': 'https://explorifymotorcycle.com',
+        },
+      };
 
   // Initialize environment
   void init(Environment env) {
