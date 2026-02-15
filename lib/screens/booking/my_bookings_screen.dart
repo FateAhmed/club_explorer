@@ -1,5 +1,6 @@
 import 'package:explorify/controllers/chat_controller.dart';
 import 'package:explorify/models/tour.dart';
+import 'package:explorify/models/tour_booking.dart';
 import 'package:explorify/screens/chat/chat.dart';
 import 'package:explorify/screens/home/home_controller.dart';
 import 'package:explorify/utils/AppColors.dart';
@@ -11,6 +12,7 @@ import 'package:explorify/config/routes.dart';
 import 'package:explorify/screens/home/web_widget/web_widget.dart';
 import 'package:explorify/screens/tour/navigation_screen.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as maps;
+import 'package:intl/intl.dart';
 
 class MyBookingsScreen extends StatelessWidget {
   const MyBookingsScreen({super.key});
@@ -19,7 +21,6 @@ class MyBookingsScreen extends StatelessWidget {
     try {
       final chatController = Get.find<ChatController>();
 
-      // Find the chat for this tour
       final tourChat = chatController.groupChats.firstWhereOrNull(
         (chat) => chat.tourId == tour.id,
       );
@@ -59,7 +60,7 @@ class MyBookingsScreen extends StatelessWidget {
       backgroundColor: AppColors.grey50,
       body: SafeArea(
         child: Obx(() {
-          final bookings = homeController.bookedTours;
+          final bookings = homeController.tourBookings;
 
           // Only show loading if no cached data
           if (homeController.isLoading.value && bookings.isEmpty) {
@@ -112,21 +113,25 @@ class MyBookingsScreen extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               itemCount: bookings.length,
               itemBuilder: (context, index) {
-                final tour = bookings[index];
+                final booking = bookings[index];
+                final tour = homeController.tourMap[booking.tourId];
+
                 // Get unread count for this tour's chat
                 int unreadCount = 0;
-                try {
-                  final chatController = Get.find<ChatController>();
-                  final tourChat = chatController.groupChats.firstWhereOrNull(
-                    (chat) => chat.tourId == tour.id,
-                  );
-                  if (tourChat != null && tourChat.id != null) {
-                    unreadCount = chatController.getUnreadCount(tourChat.id!);
+                if (tour != null) {
+                  try {
+                    final chatController = Get.find<ChatController>();
+                    final tourChat = chatController.groupChats.firstWhereOrNull(
+                      (chat) => chat.tourId == tour.id,
+                    );
+                    if (tourChat != null && tourChat.id != null) {
+                      unreadCount = chatController.getUnreadCount(tourChat.id!);
+                    }
+                  } catch (e) {
+                    // ChatController not initialized yet
                   }
-                } catch (e) {
-                  // ChatController not initialized yet
                 }
-                return _buildBookingCard(context, tour, unreadCount);
+                return _buildBookingCard(context, booking, tour, unreadCount);
               },
             ),
           );
@@ -135,12 +140,15 @@ class MyBookingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBookingCard(BuildContext context, TourModel tour, int unreadCount) {
-    final days = tour.itinerary?.length ?? 0;
+  Widget _buildBookingCard(BuildContext context, TourBookingModel booking, TourModel? tour, int unreadCount) {
+    final days = tour?.itinerary?.length ?? 0;
+    final dateFormat = DateFormat('MMM d, yyyy');
 
     return GestureDetector(
       onTap: () {
-        Get.to(() => WebViewPage(url: WebRoutes.tourDetail(tour.id)));
+        if (tour != null) {
+          Get.to(() => WebViewPage(url: WebRoutes.tourDetail(tour.id)));
+        }
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
@@ -168,9 +176,9 @@ class MyBookingsScreen extends StatelessWidget {
                   // Tour image
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: tour.routeMapImage != null
+                    child: tour?.routeMapImage != null
                         ? Image.network(
-                            tour.routeMapImage!,
+                            tour!.routeMapImage!,
                             width: 90,
                             height: 90,
                             fit: BoxFit.cover,
@@ -184,9 +192,9 @@ class MyBookingsScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Title
+                        // Tour Title
                         Text(
-                          tour.title,
+                          tour?.title ?? 'Tour Booking',
                           style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
@@ -195,83 +203,87 @@ class MyBookingsScreen extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 6),
-                        // Location
-                        Row(
-                          children: [
-                            Icon(
-                              CupertinoIcons.location_solid,
-                              size: 12,
-                              color: AppColors.grey,
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                tour.startLocation,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.grey,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
+                        const SizedBox(height: 4),
+                        // Package name
+                        Text(
+                          booking.packageSelected,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.primary1,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
+                        const SizedBox(height: 4),
+                        // Location
+                        if (tour != null)
+                          Row(
+                            children: [
+                              Icon(
+                                CupertinoIcons.location_solid,
+                                size: 12,
+                                color: AppColors.grey,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  '${tour.startLocation} → ${tour.endLocation}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.grey,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
                         const SizedBox(height: 8),
-                        // Duration badge + Status badge row
-                        Row(
+                        // Badges row
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
                           children: [
-                            // Duration badge
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: AppColors.grey100,
-                                borderRadius: BorderRadius.circular(6),
+                            // Start date
+                            if (booking.selectedStartDate != null)
+                              _buildBadge(
+                                icon: CupertinoIcons.calendar,
+                                text: dateFormat.format(booking.selectedStartDate!),
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    CupertinoIcons.calendar,
-                                    size: 12,
-                                    color: AppColors.textprimary,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '$days ${days == 1 ? 'day' : 'days'}',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.textprimary,
-                                    ),
-                                  ),
-                                ],
+                            // Duration
+                            if (days > 0)
+                              _buildBadge(
+                                icon: CupertinoIcons.time,
+                                text: '$days ${days == 1 ? 'day' : 'days'}',
                               ),
+                            // Riders
+                            _buildBadge(
+                              icon: CupertinoIcons.person_2,
+                              text: '${booking.totalParticipants} rider${booking.totalParticipants != 1 ? 's' : ''}',
                             ),
-                            const SizedBox(width: 8),
                             // Status badge
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: AppColors.success.withAlpha(25),
+                                color: _statusColor(booking.status).withAlpha(25),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
-                                    CupertinoIcons.checkmark_circle_fill,
+                                    _statusIcon(booking.status),
                                     size: 12,
-                                    color: AppColors.success,
+                                    color: _statusColor(booking.status),
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    'Confirmed',
+                                    booking.status[0].toUpperCase() + booking.status.substring(1),
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
-                                      color: AppColors.success,
+                                      color: _statusColor(booking.status),
                                     ),
                                   ),
                                 ],
@@ -291,129 +303,177 @@ class MyBookingsScreen extends StatelessWidget {
               color: AppColors.grey100,
             ),
             // Bottom section: Action buttons
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Row(
-                children: [
-                  // Navigation button
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        final tourPoints = tour.tourPoints ?? [];
-                        if (tourPoints.isEmpty) {
-                          Get.snackbar(
-                            'No Route',
-                            'No navigation points available for this tour',
-                            snackPosition: SnackPosition.BOTTOM,
-                          );
-                          return;
-                        }
-                        final routePoints = tourPoints
-                            .map((p) => maps.LatLng(p.lat, p.lng))
-                            .toList();
-                        final pointNames = tourPoints.map((p) => p.name).toList();
-                        Get.to(() => NavigationScreen(
-                              routePoints: routePoints,
-                              pointNames: pointNames,
-                              tourName: tour.title,
-                            ));
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary1,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              CupertinoIcons.location_fill,
-                              size: 16,
-                              color: Colors.white,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Navigation',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
+            if (tour != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Row(
+                  children: [
+                    // Navigation button
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          final tourPoints = tour.tourPoints ?? [];
+                          if (tourPoints.isEmpty) {
+                            Get.snackbar(
+                              'No Route',
+                              'No navigation points available for this tour',
+                              snackPosition: SnackPosition.BOTTOM,
+                            );
+                            return;
+                          }
+                          final routePoints = tourPoints
+                              .map((p) => maps.LatLng(p.lat, p.lng))
+                              .toList();
+                          final pointNames = tourPoints.map((p) => p.name).toList();
+                          Get.to(() => NavigationScreen(
+                                routePoints: routePoints,
+                                pointNames: pointNames,
+                                tourName: tour.title,
+                              ));
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary1,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                CupertinoIcons.location_fill,
+                                size: 16,
                                 color: Colors.white,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 6),
+                              Text(
+                                'Navigation',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  // Chat button
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => _navigateToTourChat(tour),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.primary1),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                Icon(
-                                  CupertinoIcons.chat_bubble_fill,
-                                  size: 16,
-                                  color: AppColors.primary1,
-                                ),
-                                if (unreadCount > 0)
-                                  Positioned(
-                                    right: -6,
-                                    top: -6,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(3),
-                                      decoration: const BoxDecoration(
-                                        color: Colors.red,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
-                                      child: Text(
-                                        unreadCount > 9 ? '9+' : '$unreadCount',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 8,
-                                          fontWeight: FontWeight.bold,
+                    const SizedBox(width: 10),
+                    // Chat button
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => _navigateToTourChat(tour),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppColors.primary1),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Icon(
+                                    CupertinoIcons.chat_bubble_fill,
+                                    size: 16,
+                                    color: AppColors.primary1,
+                                  ),
+                                  if (unreadCount > 0)
+                                    Positioned(
+                                      right: -6,
+                                      top: -6,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(3),
+                                        decoration: const BoxDecoration(
+                                          color: Colors.red,
+                                          shape: BoxShape.circle,
                                         ),
-                                        textAlign: TextAlign.center,
+                                        constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                                        child: Text(
+                                          unreadCount > 9 ? '9+' : '$unreadCount',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 8,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Group Chat',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.primary1,
+                                ],
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 6),
+                              Text(
+                                'Group Chat',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary1,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildBadge({required IconData icon, required String text}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.grey100,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: AppColors.textprimary),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textprimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _statusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'confirmed':
+        return AppColors.success;
+      case 'cancelled':
+        return Colors.red;
+      default:
+        return Colors.orange;
+    }
+  }
+
+  IconData _statusIcon(String status) {
+    switch (status.toLowerCase()) {
+      case 'confirmed':
+        return CupertinoIcons.checkmark_circle_fill;
+      case 'cancelled':
+        return CupertinoIcons.xmark_circle_fill;
+      default:
+        return CupertinoIcons.clock_fill;
+    }
   }
 
   Widget _buildPlaceholder() {

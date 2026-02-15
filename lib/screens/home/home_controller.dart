@@ -3,14 +3,25 @@ import 'dart:convert';
 import 'package:explorify/config/api_config.dart';
 import 'package:explorify/controllers/auth_controller.dart';
 import 'package:explorify/models/tour.dart';
+import 'package:explorify/models/tour_booking.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 
 class HomeController extends GetxController {
   RxList<TourModel> allTours = RxList<TourModel>();
-  RxList<TourModel> bookedTours = RxList<TourModel>();
+  RxList<TourBookingModel> tourBookings = RxList<TourBookingModel>();
   RxBool isLoading = false.obs;
+
+  /// Map of tourId -> TourModel for quick lookup
+  Map<String, TourModel> get tourMap =>
+      {for (var tour in allTours) tour.id: tour};
+
+  /// Legacy getter: unique booked tours (for home screen horizontal list)
+  List<TourModel> get bookedTours {
+    final bookedTourIds = tourBookings.map((b) => b.tourId).toSet();
+    return allTours.where((tour) => bookedTourIds.contains(tour.id)).toList();
+  }
 
   @override
   void onInit() {
@@ -55,13 +66,8 @@ class HomeController extends GetxController {
         var jsonData = jsonDecode(data);
         var bookings = jsonData['bookings'] as List;
 
-        List<String> bookedTourIds = bookings
-            .map((booking) => booking['tourId']?.toString() ?? '')
-            .where((id) => id.isNotEmpty)
-            .toList();
-
-        bookedTours.value = allTours
-            .where((tour) => bookedTourIds.contains(tour.id))
+        tourBookings.value = bookings
+            .map((b) => TourBookingModel.fromJson(b))
             .toList();
       }
     } catch (e) {
