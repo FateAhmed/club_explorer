@@ -18,20 +18,25 @@ class MessagesScreen extends StatefulWidget {
 
 class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late ChatController chatController;
+  ChatController? chatController;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+
+  bool get _hasController => chatController != null;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    chatController = Get.find<ChatController>();
 
-    // Load all chats when screen initializes
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      chatController.loadUserChats();
-    });
+    if (Get.isRegistered<ChatController>()) {
+      chatController = Get.find<ChatController>();
+
+      // Load all chats when screen initializes
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        chatController?.loadUserChats();
+      });
+    }
 
     // Listen to search changes
     _searchController.addListener(_onSearchChanged);
@@ -77,6 +82,36 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
+    // Re-check controller availability on each build (handles late login)
+    if (!_hasController && Get.isRegistered<ChatController>()) {
+      chatController = Get.find<ChatController>();
+      chatController?.loadUserChats();
+    }
+
+    if (!_hasController) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Chats'),
+          centerTitle: true,
+          backgroundColor: AppColors.grey50,
+        ),
+        backgroundColor: AppColors.grey50,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(CupertinoIcons.chat_bubble_text, size: 64, color: AppColors.grey),
+              AppDimens.sizebox10,
+              Text(
+                'Sign in to view chats',
+                style: TextStyle(fontSize: 18, color: AppColors.grey, fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Chats'),
@@ -130,8 +165,6 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
               ),
             ),
           ),
-          // Debug overlay - only show in debug mode
-          // if (kDebugMode) const DebugOverlay(),
         ],
       ),
     );
@@ -139,10 +172,10 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
 
   Widget _buildTabWithBadge(String title, bool isPrivate) {
     // Access the RxMap to trigger reactivity
-    final _ = chatController.unreadCountsMap.length;
+    final _ = chatController!.unreadCountsMap.length;
     final unreadCount = isPrivate
-        ? chatController.privateChatsUnreadCount
-        : chatController.groupChatsUnreadCount;
+        ? chatController!.privateChatsUnreadCount
+        : chatController!.groupChatsUnreadCount;
 
     return Tab(
       child: Row(
@@ -175,11 +208,11 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
 
   Widget _buildChatList({required bool isGroupChat}) {
     return Obx(() {
-      final allChats = isGroupChat ? chatController.groupChats : chatController.privateChats;
+      final allChats = isGroupChat ? chatController!.groupChats : chatController!.privateChats;
       final chats = _filterChats(allChats);
 
       // Only show loading if we have no cached data
-      if (chatController.isLoading && allChats.isEmpty) {
+      if (chatController!.isLoading && allChats.isEmpty) {
         return Center(
           child: CircularProgressIndicator(
             color: AppColors.primary1,
@@ -273,7 +306,7 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
 
     return ListTile(
       onTap: () {
-        chatController.setCurrentChat(chat);
+        chatController!.setCurrentChat(chat);
         Get.to(() => InChat(
               chatId: chat.id!,
               chatName: chat.name,
@@ -340,7 +373,7 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
           ),
           const SizedBox(width: 8),
           Text(
-            chatController.formatMessageTime(chat.lastActivity),
+            chatController!.formatMessageTime(chat.lastActivity),
             style: const TextStyle(fontSize: 12, color: Colors.grey),
           ),
         ],
@@ -365,7 +398,7 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
           ),
           // Wrap unread badge in Obx for reactive updates
           Obx(() {
-            final unreadCount = chatController.getUnreadCount(chat.id!);
+            final unreadCount = chatController!.getUnreadCount(chat.id!);
             if (unreadCount > 0) {
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
